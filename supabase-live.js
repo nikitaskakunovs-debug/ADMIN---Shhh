@@ -120,7 +120,7 @@ window.SHHH_LIVE = {
   async load() {
     this.status = 'loading';
     const [products, brands, categories] = await Promise.all([
-      this.fetch('products?select=legacy_id,sku,name,price,compare_at,cost,stock,status,color,sizes,created_at,category_id,brand:brands(id,name)&order=created_at.asc'),
+      this.fetch('products?select=legacy_id,sku,name,price,compare_at,cost,stock,status,color,sizes,created_at,category_id,brand:brands(id,name),product_images(url,position)&order=created_at.asc'),
       this.fetch('brands?select=id,name,country,kind,margin,blurb,featured&order=name.asc'),
       this.fetch('categories?select=id,name,position&order=position.asc'),
     ]);
@@ -143,6 +143,8 @@ window.SHHH_LIVE = {
       sizes: p.sizes || [],
       rating: 0, // derived from reviews once those move to the DB
       createdAt: (p.created_at || '').slice(0, 10),
+      images: (p.product_images || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0)).map(i => i.url),
+      image: (p.product_images || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0)).map(i => i.url)[0] || null,
     }));
     window.BRANDS = brands;
     // The catalog screens read window.CATEGORIES ({id, label}).
@@ -279,6 +281,38 @@ window.SHHH_LIVE = {
       await this._rest('order_items', 'POST', items, 'return=minimal');
     }
     return created.id;
+  },
+
+  // Upload a product photo to Storage and record it in product_images.
+  // Returns the new public image URL.
+  async uploadProductPhoto(file, legacyId) {
+    if (!this.session) throw new Error('Not signed in.');
+    if (!file) throw new Error('No file selected.');
+    if (file.size > 6 * 1024 * 1024) throw new Error('Image is larger than 6 MB.');
+    const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const path = encodeURIComponent(legacyId) + '/' + Date.now() + '.' + ext;
+    const up = await fetch(this.url + '/storage/v1/object/product-photos/' + path, {
+      method: 'POST',
+      headers: {
+        apikey: this.key, Authorization: 'Bearer ' + this.session.access_token,
+        'x-upsert': 'true', 'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+    if (!up.ok) {
+      const t = await up.text().catch(() => '');
+      throw new Error('Upload failed (HTTP ' + up.status + '): ' + t.slice(0, 140));
+    }
+    const publicUrl = this.url + '/storage/v1/object/public/product-photos/' + path;
+    // Link it to the product (first image = position 0).
+    const rows = await this.fetch('products?select=id&legacy_id=eq.' + encodeURIComponent(legacyId));
+    if (rows.length) {
+      const existing = await this.fetch('product_images?select=id&product_id=eq.' + rows[0].id);
+      await this._rest('product_images', 'POST',
+        { product_id: rows[0].id, url: publicUrl, position: existing.length },
+        'return=minimal');
+    }
+    return publicUrl;
   },
 
   // Insert a new catalog product. Returns the created DB row.

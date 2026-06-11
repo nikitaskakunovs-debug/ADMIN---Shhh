@@ -30,6 +30,24 @@ function ACatalog({ ctx, params, nav }) {
   const [draft, setDraft] = React.useState(null);
   const [newDraft, setNewDraft] = React.useState(null); // create-product form
   const [, bumpCatalog] = React.useState(0);
+  const [photoBusy, setPhotoBusy] = React.useState(false);
+  const photoInput = React.useRef(null);
+  const onPhotoPick = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow re-picking the same file
+    if (!file || !openP) return;
+    const live = window.SHHH_LIVE;
+    if (!live || !live.session) { toast('⚠ Sign in to upload photos.'); return; }
+    setPhotoBusy(true);
+    try {
+      const url = await live.uploadProductPhoto(file, openP.id);
+      openP.image = url; openP.images = [...(openP.images || []), url];
+      setDraft(d => ({ ...d, image: url }));
+      if (ctx.log) ctx.log('catalog', 'Photo added', openP.name, '');
+      toast('Photo added to ' + openP.name);
+    } catch (ex) { console.warn('[shhh] photo upload failed', ex); toast('⚠ ' + ((ex && ex.message) || 'Upload failed')); }
+    finally { setPhotoBusy(false); }
+  };
   const createProduct = async () => {
     const n = newDraft;
     if (n.busy) return;
@@ -146,7 +164,7 @@ function ACatalog({ ctx, params, nav }) {
                   <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => nav('catalog', { id: p.id })}>
                     <ATd strong onClick={() => nav('catalog', { id: p.id })}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ width: 30, height: 30, borderRadius: 6, background: AT.surfaceAlt, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><svg viewBox="0 0 100 100" width="20" height="20"><path d={p.blob} fill={AT.ink} /></svg></span>
+                        <span style={{ width: 30, height: 30, borderRadius: 6, background: AT.surfaceAlt, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>{p.image ? <img src={p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.blob ? <svg viewBox="0 0 100 100" width="20" height="20"><path d={p.blob} fill={AT.ink} /></svg> : <AIcon name="catalog" size={14} color={AT.inkSoft} />)}</span>
                         <span>{p.name}{effHidden(ctx, p) && <ABadge tone="neutral"> hidden</ABadge>}</span>
                       </div>
                     </ATd>
@@ -169,7 +187,7 @@ function ACatalog({ ctx, params, nav }) {
                   <button key={p.id} onClick={() => nav('catalog', { id: p.id })} style={{ all: 'unset', cursor: 'pointer' }}>
                     <APanel style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ aspectRatio: '1/1', background: AT.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                        <svg viewBox="0 0 100 100" width="48%" height="48%"><path d={p.blob} fill={AT.ink} /></svg>
+                        {p.image ? <img src={p.image} alt={p.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : (p.blob ? <svg viewBox="0 0 100 100" width="48%" height="48%"><path d={p.blob} fill={AT.ink} /></svg> : <AIcon name="catalog" size={40} color={AT.inkSoft} />)}
                         <span style={{ position: 'absolute', top: 10, left: 10 }}><ABadge tone={stockTone(n)}>{stockLabel(n)}</ABadge></span>
                         {effHidden(ctx, p) && <span style={{ position: 'absolute', top: 10, right: 10 }}><ABadge tone="neutral">hidden</ABadge></span>}
                       </div>
@@ -258,10 +276,19 @@ function ACatalog({ ctx, params, nav }) {
         {openP && draft && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-              <div style={{ width: 72, height: 72, borderRadius: 10, background: AT.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg viewBox="0 0 100 100" width="46" height="46"><path d={openP.blob} fill={AT.ink} /></svg>
+              <div style={{ width: 72, height: 72, borderRadius: 10, background: AT.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                {(draft.image || openP.image)
+                  ? <img src={draft.image || openP.image} alt={openP.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : (openP.blob ? <svg viewBox="0 0 100 100" width="46" height="46"><path d={openP.blob} fill={AT.ink} /></svg>
+                                : <AIcon name="catalog" size={26} color={AT.inkSoft} />)}
               </div>
-              <div style={{ fontFamily: AT.body, fontSize: 13, color: AT.inkSoft, lineHeight: 1.5 }}>{openP.ptype}<br />{openP.material} · {openP.modes} modes · {openP.decibels} dB</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+                <input ref={photoInput} type="file" accept="image/*" onChange={onPhotoPick} style={{ display: 'none' }} />
+                <ABtn kind="ghost" size="sm" onClick={() => photoInput.current && photoInput.current.click()} disabled={photoBusy}>
+                  <AIcon name="plus" size={14} /> {photoBusy ? 'Uploading…' : ((draft.image || openP.image) ? 'Replace photo' : 'Add photo')}
+                </ABtn>
+                <span style={{ fontFamily: AT.body, fontSize: 11.5, color: AT.inkSoft }}>JPG or PNG, up to 6 MB.{(openP.images && openP.images.length > 1) ? ` ${openP.images.length} photos.` : ''}</span>
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <AField label="Category"><select value={draft.category || ''} onChange={e => setDraft({ ...draft, category: e.target.value })} style={{ ...aInputStyle, cursor: 'pointer' }}>{(window.CATEGORIES || []).filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></AField>
