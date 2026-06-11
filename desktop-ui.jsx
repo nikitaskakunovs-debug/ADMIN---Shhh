@@ -343,6 +343,7 @@ function DLangSwitcher() {
 // Footer
 // ─────────────────────────────────────────────────────────────
 function DFooter({ nav }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const openCookies = () => { if (window.__shhhOpenConsent) window.__shhhOpenConsent(); };
   const cols = [
     { h: 'Ceļveži', items: [
@@ -358,7 +359,7 @@ function DFooter({ nav }) {
       ['Velura', () => nav('content', { key: 'brand-velura' })],
       ['Lumen', () => nav('content', { key: 'brand-lumen' })],
     ]},
-    { h: 'Veikals', items: [
+    { h: t('footer.shop', 'Veikals'), items: [
       ['Viss katalogs', () => nav('browse', { cat: 'all' })],
       ['Solo', () => nav('catland', { cat: 'solo' })],
       ['Pāriem', () => nav('catland', { cat: 'couples' })],
@@ -370,7 +371,7 @@ function DFooter({ nav }) {
       ['Pirmā reize', () => nav('occasion', { key: 'first' })],
       ['Palutini sevi', () => nav('occasion', { key: 'treat' })],
     ]},
-    { h: 'Uzticība', items: [
+    { h: t('footer.trust', 'Uzticība'), items: [
       ['How it ships', () => nav('packaging')],
       ['Piegādes politika', () => nav('content', { key: 'shipping-policy' })],
       ['Maksājumu veidi', () => nav('content', { key: 'payment-methods' })],
@@ -378,7 +379,7 @@ function DFooter({ nav }) {
       ['Body-safe materials', () => nav('content', { key: 'body-safe' })],
       ['Sertifikāti un testēšana', () => nav('content', { key: 'certification' })],
     ]},
-    { h: 'Atbalsts', items: [
+    { h: t('footer.support', 'Atbalsts'), items: [
       ['Par mums', () => nav('content', { key: 'about' })],
       ['Atsauksmes', () => nav('content', { key: 'reviews' })],
       ['Mani pasūtījumi', () => nav('lookup')],

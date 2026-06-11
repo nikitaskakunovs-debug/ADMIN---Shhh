@@ -215,6 +215,9 @@ window.SHHH_LIVE = {
         try { cur = JSON.parse(localStorage.getItem('shhh_cms_v1') || '{}'); } catch (e) {}
         ov.forEach(r => { cur[r.key] = r.data; });
         localStorage.setItem('shhh_cms_v1', JSON.stringify(cur));
+        // Re-apply BOTH override kinds: pages/banners AND UI strings (the
+        // string applier already ran at script load, before this hydration).
+        if (typeof window.__shhhApplyStrings === 'function') window.__shhhApplyStrings();
         if (typeof window.__shhhApplyCms === 'function') window.__shhhApplyCms();
       }
     } catch (e) { console.warn('[shhh] CMS overrides load failed', e); }
