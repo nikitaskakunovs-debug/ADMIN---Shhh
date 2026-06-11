@@ -514,7 +514,7 @@ function CategoryScreen({ theme, nav, cardStyle, params, intent, openWelcome, fa
             }}>
               {c.label}
               <span style={{ opacity: 0.6, fontFamily: theme.mono, fontSize: 11 }}>
-                {c.count.toString().padStart(2, '0')}
+                {(c.count || 0).toString().padStart(2, '0')}
               </span>
             </button>
           );

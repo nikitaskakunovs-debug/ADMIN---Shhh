@@ -702,7 +702,7 @@ function FilterBar({ theme, onOpenFilters, onOpenSort, activeCount, sortLabel, p
         <div style={{ flex: 1 }} />
         {!hideCount && (
           <div style={{ fontFamily: theme.mono, fontSize: 11, color: theme.inkSoft }}>
-            {productCount.toString().padStart(2, '0')} pieces
+            {(productCount || 0).toString().padStart(2, '0')} pieces
           </div>
         )}
       </div>

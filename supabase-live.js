@@ -185,13 +185,17 @@ window.SHHH_LIVE = {
     // its own full static directory (window.BRANDS there is presentation).
     if (inAdmin) window.BRANDS = brands;
 
-    // Categories ({id, label}): keep order/extras of the built-ins, add any
-    // DB categories that actually have products, drop empty built-ins.
+    // Categories: keep order/extras of the built-ins, add any DB categories
+    // that actually have products, drop empty built-ins. Every entry carries a
+    // live `count` (the storefront calls c.count.toString(), so it must exist).
     const usedCats = new Set(finalProducts.map(p => p.category).filter(Boolean));
+    const countByCat = {};
+    finalProducts.forEach(p => { if (p.category) countByCat[p.category] = (countByCat[p.category] || 0) + 1; });
+    const catCount = (id) => id === 'all' ? finalProducts.length : (countByCat[id] || 0);
     const catList = [];
-    (window.CATEGORIES || []).forEach(c => { if (c.id === 'all' || usedCats.has(c.id)) catList.push(c); });
+    (window.CATEGORIES || []).forEach(c => { if (c.id === 'all' || usedCats.has(c.id)) catList.push(Object.assign({}, c, { count: catCount(c.id) })); });
     const known = new Set(catList.map(c => c.id));
-    categories.forEach(c => { if (usedCats.has(c.id) && !known.has(c.id)) catList.push({ id: c.id, label: c.name }); });
+    categories.forEach(c => { if (usedCats.has(c.id) && !known.has(c.id)) catList.push({ id: c.id, label: c.name, count: catCount(c.id) }); });
     if (Array.isArray(window.CATEGORIES)) { window.CATEGORIES.length = 0; Array.prototype.push.apply(window.CATEGORIES, catList); }
     else window.CATEGORIES = catList;
 

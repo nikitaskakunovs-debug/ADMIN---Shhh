@@ -159,6 +159,7 @@
 
 <!-- Live catalog: prices, stock and photos come from Supabase (falls back to built-in demo data) -->
 <script src="supabase-live.js"></script>
+<script type="text/babel" src="shop-errorboundary.jsx"></script>
 
 <script type="text/babel" src="ios-frame.jsx"></script>
 <script type="text/babel" src="tweaks-panel.jsx"></script>
@@ -391,11 +392,12 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
   const showStage = new URLSearchParams(location.search).get('stage') === '1';
   if (!showStage) document.body.classList.add('shhh-live');
   const t = TWEAK_DEFAULTS;
-  root.render(showStage ? <Stage /> : (
+  const app = showStage ? <Stage /> : (
     <ShopApp frameless themeId="velvet"
       cardStyle={t.cardStyle} heroLayout={t.heroLayout}
       checkoutFlow={t.checkoutFlow} tone={t.tone} startScreen="home" />
-  ));
+  );
+  root.render(<ShhhErrorBoundary>{app}</ShhhErrorBoundary>);
 })();
 </script>
 

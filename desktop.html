@@ -66,6 +66,7 @@
 
 <!-- Live catalog: prices, stock and photos come from Supabase (falls back to built-in demo data) -->
 <script src="supabase-live.js"></script>
+<script type="text/babel" src="shop-errorboundary.jsx"></script>
 
 <!-- Shared data + logic reused AS-IS from the mobile prototype (v15) -->
 <script type="text/babel" src="shop-data.jsx"></script>
@@ -136,7 +137,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 (async () => {
   try { if (window.SHHH_LIVE) await window.SHHH_LIVE.load(); }
   catch (e) { if (window.SHHH_LIVE) window.SHHH_LIVE.status = 'fallback'; console.warn('[shhh] Supabase unavailable - using built-in demo data.', e); }
-  root.render(<DApp />);
+  root.render(<ShhhErrorBoundary><DApp /></ShhhErrorBoundary>);
 })();
 </script>
 
