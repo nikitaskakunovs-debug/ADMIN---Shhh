@@ -205,6 +205,42 @@ window.SHHH_LIVE = {
       window.SHOP_DATA.categories = categories.map(c => ({ id: c.id, name: c.name }));
     }
 
+    // CMS overrides: hydrate localStorage from the DB BEFORE the app reads it,
+    // so admin content edits reach every visitor (not just the editor's
+    // browser). DB wins over any stale local copy, key by key.
+    try {
+      const ov = await this.fetch('cms_overrides?select=key,data');
+      if (ov.length) {
+        let cur = {};
+        try { cur = JSON.parse(localStorage.getItem('shhh_cms_v1') || '{}'); } catch (e) {}
+        ov.forEach(r => { cur[r.key] = r.data; });
+        localStorage.setItem('shhh_cms_v1', JSON.stringify(cur));
+        if (typeof window.__shhhApplyCms === 'function') window.__shhhApplyCms();
+      }
+    } catch (e) { console.warn('[shhh] CMS overrides load failed', e); }
+
+    // Reviews: approved ones feed the storefront product pages; the full
+    // moderation queue (visible once signed in) feeds the admin.
+    try {
+      const reviews = await this.loadReviews();
+      window.LIVE_REVIEWS = reviews;
+      if (window.REVIEWS && reviews.length) {
+        const approved = reviews.filter(r => r.decided === 'approved');
+        approved.forEach(r => {
+          const list = window.REVIEWS[r.product] = window.REVIEWS[r.product] || [];
+          if (!list.some(x => x._id === r._id)) {
+            list.unshift({ _id: r._id, name: r.name, stars: r.stars, date: r.date, body: r.body, verified: r.verified });
+          }
+        });
+      }
+    } catch (e) { console.warn('[shhh] reviews load failed', e); }
+
+    // Returns (admin only — locked to anonymous readers).
+    if (this.session) {
+      try { window.LIVE_RETURNS = await this.loadReturns(); }
+      catch (e) { console.warn('[shhh] returns load failed', e); }
+    }
+
     // Orders are loaded too, into window.LIVE_ORDERS (adminLoad prefers it).
     try { window.LIVE_ORDERS = await this.loadOrders(); }
     catch (e) { console.warn('[shhh] order load failed; using demo orders.', e); }
@@ -362,6 +398,83 @@ window.SHHH_LIVE = {
         'return=minimal');
     }
     return publicUrl;
+  },
+
+  // ── Reviews ──
+  async loadReviews() {
+    const rows = await this.fetch('reviews?select=id,ref,display_name,stars,body,verified,status,created_at,product:products(legacy_id)&order=created_at.desc&limit=300');
+    return rows.map(r => ({
+      _id: r.id,
+      id: r.ref || r.id,
+      product: r.product ? r.product.legacy_id : null,
+      name: r.display_name, stars: r.stars, body: r.body,
+      date: (r.created_at || '').slice(0, 10), verified: !!r.verified,
+      decided: r.status === 'pending' ? undefined : (r.status === 'approved' ? 'approved' : 'rejected'),
+    }));
+  },
+
+  async submitReview(p) {
+    const res = await fetch(this.url + '/rest/v1/rpc/submit_review', {
+      method: 'POST', headers: this._headers(true), body: JSON.stringify({ p }),
+    });
+    if (!res.ok) { const t = await res.text().catch(() => ''); throw new Error('Review submit failed (HTTP ' + res.status + '): ' + t.slice(0, 140)); }
+    return res.json();
+  },
+
+  async setReviewStatus(id, status) {
+    if (!this.session) throw new Error('Not signed in.');
+    await this._rest('reviews?id=eq.' + encodeURIComponent(id), 'PATCH', { status }, 'return=minimal');
+  },
+
+  // ── Returns ──
+  async loadReturns() {
+    const rows = await this.fetch('returns?select=id,ref,kind,status,reason,item,channel,customer_name,email,refund_amount,intake,created_at,order:orders(ref),return_messages(id,sender,via,author,body,images,delivery_status,created_at)&order=created_at.desc&limit=200');
+    return rows.map(r => ({
+      _id: r.id,
+      id: r.ref,
+      ref: r.order ? r.order.ref : null,
+      kind: r.kind, status: r.status, reason: r.reason, item: r.item,
+      channel: r.channel, customer: r.customer_name, email: r.email,
+      refund: Number(r.refund_amount) || 0,
+      date: (r.created_at || '').slice(0, 10),
+      intake: r.intake || null,
+      thread: (r.return_messages || [])
+        .sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
+        .map(m => ({ id: m.id, from: m.sender, via: m.via, author: m.author, body: m.body, images: m.images || [], status: m.delivery_status || undefined, ts: (m.created_at || '').replace('T', ' ').slice(0, 16) })),
+    }));
+  },
+
+  async submitReturn(p) {
+    const res = await fetch(this.url + '/rest/v1/rpc/submit_return', {
+      method: 'POST', headers: this._headers(true), body: JSON.stringify({ p }),
+    });
+    if (!res.ok) { const t = await res.text().catch(() => ''); throw new Error('Return submit failed (HTTP ' + res.status + '): ' + t.slice(0, 140)); }
+    return res.json(); // { ref }
+  },
+
+  async updateReturn(id, patch) {
+    if (!this.session) throw new Error('Not signed in.');
+    const cols = {};
+    if (patch.status !== undefined) cols.status = patch.status;
+    if (patch.refund !== undefined) cols.refund_amount = Number(patch.refund) || 0;
+    if (!Object.keys(cols).length) return;
+    await this._rest('returns?id=eq.' + encodeURIComponent(id), 'PATCH', cols, 'return=minimal');
+  },
+
+  async addReturnMessage(returnId, m) {
+    if (!this.session) throw new Error('Not signed in.');
+    await this._rest('return_messages', 'POST', {
+      return_id: returnId, sender: m.from || 'support', via: m.via || 'email',
+      author: m.author || null, body: m.body || '', images: m.images || [],
+    }, 'return=minimal');
+  },
+
+  // ── CMS ──
+  async saveCmsOverride(key, data) {
+    if (!this.session) throw new Error('Not signed in.');
+    await this._rest('cms_overrides?on_conflict=key', 'POST',
+      { key, data, updated_at: new Date().toISOString() },
+      'resolution=merge-duplicates,return=minimal');
   },
 
   // ── Storefront checkout (anonymous shoppers, via controlled RPCs) ──

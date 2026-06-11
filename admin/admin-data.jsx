@@ -426,8 +426,11 @@ function adminLoad() {
                  : SEED_ORDERS.map(_mkOrder);
   const stock = saved.stock || (window.PRODUCTS || []).reduce((m, p) => { m[p.id] = typeof p.stock === 'number' ? p.stock : 8; return m; }, {});
   const prices = saved.prices || {};
-  const reviews = saved.reviews || SEED_REVIEWS_QUEUE;
-  const returns = saved.returns || SEED_RETURNS;
+  // Prefer live reviews/returns from Supabase (set by the boot loader).
+  const reviews = (window.LIVE_REVIEWS && window.LIVE_REVIEWS.length) ? window.LIVE_REVIEWS
+                  : saved.reviews || SEED_REVIEWS_QUEUE;
+  const returns = (window.LIVE_RETURNS && window.LIVE_RETURNS.length) ? window.LIVE_RETURNS
+                  : saved.returns || SEED_RETURNS;
   const role = saved.role || 'owner';
   // Editable promos / gift cards / brand featured flags (seeded from storefront data)
   const promos = saved.promos || JSON.parse(JSON.stringify(window.PROMO_CODES || {}));

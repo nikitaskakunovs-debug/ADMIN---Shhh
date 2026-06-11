@@ -2193,6 +2193,7 @@ function ReviewForm({ theme, productName, onSubmitted }) {
       onSubmitted({
         name: name.trim() || 'Anonīms', stars, body: body.trim(),
         date: new Date().toLocaleDateString('lv-LV'), verified,
+        orderRef: orderRef.trim(),
       });
     }
     setStep('done');

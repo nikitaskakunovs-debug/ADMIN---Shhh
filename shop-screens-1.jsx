@@ -1149,7 +1149,17 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
               ))}
               {all.length === 0 && <span>Vēl nav atsauksmju. Esi pirmais!</span>}
               <ReviewForm theme={theme} productName={product.name}
-                onSubmitted={(rev) => setLocalReviews(prev => [rev, ...prev])} />
+                onSubmitted={(rev) => {
+                  setLocalReviews(prev => [rev, ...prev]);
+                  // Send to the database for moderation (admin review queue).
+                  if (window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+                    window.SHHH_LIVE.submitReview({
+                      product: product.id, name: rev.name, stars: rev.stars,
+                      body: rev.body, orderRef: rev.orderRef || '',
+                    }).then(r => console.info('[shhh] review submitted for moderation', r))
+                      .catch(e => console.warn('[shhh] review DB submit failed', e));
+                  }
+                }} />
             </div>
           );
         })()}

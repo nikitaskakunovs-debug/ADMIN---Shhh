@@ -50,6 +50,22 @@ function ReturnFormScreen({ theme, nav }) {
     };
     setClaimNo(claimNo);
     setDone(true);
+    // Record the claim in the database (admin Returns inbox). The real
+    // RET-/WAR- reference replaces the provisional one when it arrives.
+    if (window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+      const firstItem = order.items && order.items[0] && (order.items[0].name || order.items[0].id);
+      window.SHHH_LIVE.submitReturn({
+        orderRef: order.ref || '', kind, reason, desc,
+        item: firstItem || '', name: (order.details && order.details.name) || '',
+        email: (order.details && order.details.email) || order.email || '',
+      }).then(r => {
+        if (r && r.ref) {
+          setClaimNo(r.ref);
+          if (window.__shhhClaims && window.__shhhClaims[order.ref]) window.__shhhClaims[order.ref].claimNo = r.ref;
+          console.info('[shhh] return claim recorded as ' + r.ref);
+        }
+      }).catch(e => console.warn('[shhh] return DB submit failed', e));
+    }
   };
   const [claimNo, setClaimNo] = React.useState('');
 

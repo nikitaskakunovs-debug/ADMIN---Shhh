@@ -49,7 +49,12 @@ function AdminApp() {
     if (!live || !live.session) return;
     let cancelled = false;
     live.load()
-      .then(() => { const rows = window.LIVE_ORDERS; if (!cancelled && rows && rows.length) setOrders(rows); })
+      .then(() => {
+        if (cancelled) return;
+        if (window.LIVE_ORDERS && window.LIVE_ORDERS.length) setOrders(window.LIVE_ORDERS);
+        if (window.LIVE_REVIEWS && window.LIVE_REVIEWS.length) setReviews(window.LIVE_REVIEWS);
+        if (window.LIVE_RETURNS && window.LIVE_RETURNS.length) setReturns(window.LIVE_RETURNS);
+      })
       .catch(e => console.warn('[shhh] post-login refresh failed', e));
     return () => { cancelled = true; };
   }, [signedIn]);
@@ -302,12 +307,41 @@ function AdminApp() {
     dbSave(id, patch, 'Product edit');
   };
   // Reviews & returns are mutated directly by their screens — wrap so each change is undoable.
-  const setReviewsU = (next) => { checkpoint('Review moderation'); setReviews(next); };
-  const setReturnsU = (next) => { checkpoint('Return / warranty claim'); setReturns(next); };
+  // Wrap setters so each change is undoable AND pushed to the database.
+  const dbPush = (promise, what) => {
+    if (!window.SHHH_LIVE || !window.SHHH_LIVE.session) return;
+    Promise.resolve(promise).catch(e => {
+      console.warn('[shhh] ' + what + ' DB write failed', e);
+      toast('⚠ ' + what + ' saved locally, but the database update failed.');
+    });
+  };
+  const setReviewsU = (next) => {
+    checkpoint('Review moderation');
+    // Push newly-decided reviews (approve/reject) to the DB.
+    next.forEach(n => {
+      const old = reviews.find(r => r.id === n.id);
+      if (n._id && old && old.decided !== n.decided && n.decided) {
+        dbPush(window.SHHH_LIVE && window.SHHH_LIVE.setReviewStatus(n._id, n.decided === 'approved' ? 'approved' : 'rejected'), 'Review decision');
+      }
+    });
+    setReviews(next);
+  };
+  const setReturnsU = (next) => {
+    checkpoint('Return / warranty claim');
+    next.forEach(n => {
+      const old = returns.find(r => r.id === n.id);
+      if (n._id && old && (old.status !== n.status || old.refund !== n.refund)) {
+        dbPush(window.SHHH_LIVE && window.SHHH_LIVE.updateReturn(n._id, { status: n.status, refund: n.refund }), 'Return update');
+      }
+    });
+    setReturns(next);
+  };
   // Append a support/customer message to a claim's email thread (no undo checkpoint).
   const replyToReturn = (id, msg) => {
     setReturns(prev => prev.map(r => r.id === id ? { ...r, thread: [...(r.thread || []), msg] } : r));
     if (msg.from === 'support') log('return', msg.via === 'note' ? 'Internal note' : 'Replied to customer', id, (msg.body || '').slice(0, 60));
+    const rec = returns.find(r => r.id === id);
+    if (rec && rec._id) dbPush(window.SHHH_LIVE && window.SHHH_LIVE.addReturnMessage(rec._id, msg), 'Reply');
   };
   // CRM mutators
   const crmNote = (email, text) => { checkpoint('Customer note'); setCrm(prev => ({ ...prev, notes: { ...prev.notes, [email]: text } })); log('customer', 'Note saved', email, ''); };
@@ -332,6 +366,8 @@ function AdminApp() {
       cmsSave(next);
       return next;
     });
+    // Publish to the database so visitors see it (not just this browser).
+    dbPush(window.SHHH_LIVE && window.SHHH_LIVE.saveCmsOverride(key, langData), 'Content publish');
     log('content', key === '__strings' ? 'Edited UI strings' : key === '__global' ? 'Edited global SEO' : 'Edited page', key.replace(/^__/, ''), '');
   };
 
