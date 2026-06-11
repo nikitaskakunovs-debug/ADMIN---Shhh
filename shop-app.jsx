@@ -1,7 +1,7 @@
 // shop-app.jsx — ShopApp: orchestrates state and renders the current screen.
 // Mobile website layout (header + footer + content), no app-style bottom bar.
 
-function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScreen = 'home', welcomeTrigger = 0 }) {
+function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScreen = 'home', welcomeTrigger = 0, frameless = false }) {
   const theme = THEMES[themeId];
   const [screen, setScreen] = React.useState(startScreen);
   const [params, setParams] = React.useState({});
@@ -174,7 +174,10 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       <div style={{
         position: 'absolute', inset: 0, overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
-        paddingTop: 50, // clear iOS status bar + dynamic island
+        // In the device mock-up, clear the fake iOS status bar + dynamic
+        // island; on a real phone the browser owns that area, so only pad
+        // for notch safe-areas plus a little breathing room.
+        paddingTop: frameless ? 'calc(env(safe-area-inset-top, 0px) + 10px)' : 50,
       }}>
         <MobileHeader theme={theme} nav={nav}
           cartCount={cartCount} favCount={favCount}
@@ -301,9 +304,16 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
 
   return (
     <LangProvider>
-      <IOSDevice width={402} height={874} dark={false}>
-        {body}
-      </IOSDevice>
+      {frameless ? (
+        // Real mobile site: fill the actual viewport, no device mock-up.
+        <div style={{ position: 'fixed', inset: 0, background: theme.bg, WebkitFontSmoothing: 'antialiased' }}>
+          {body}
+        </div>
+      ) : (
+        <IOSDevice width={402} height={874} dark={false}>
+          {body}
+        </IOSDevice>
+      )}
     </LangProvider>
   );
 }

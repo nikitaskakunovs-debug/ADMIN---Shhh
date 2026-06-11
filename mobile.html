@@ -380,7 +380,15 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 (async () => {
   try { if (window.SHHH_LIVE) await window.SHHH_LIVE.load(); }
   catch (e) { if (window.SHHH_LIVE) window.SHHH_LIVE.status = 'fallback'; console.warn('[shhh] Supabase unavailable - using built-in demo data.', e); }
-  root.render(<Stage />);
+  // Real visitors get the shop full-screen; ?stage=1 opens the design
+  // showroom (device frame, screen pins, tweaks panel) for prototyping.
+  const showStage = new URLSearchParams(location.search).get('stage') === '1';
+  const t = TWEAK_DEFAULTS;
+  root.render(showStage ? <Stage /> : (
+    <ShopApp frameless themeId="velvet"
+      cardStyle={t.cardStyle} heroLayout={t.heroLayout}
+      checkoutFlow={t.checkoutFlow} tone={t.tone} startScreen="home" />
+  ));
 })();
 </script>
 
