@@ -235,11 +235,11 @@ function HomeScreen({ theme, nav, tone, heroLayout, cardStyle, intent, subtotal,
               <div style={{
                 fontFamily: theme.display, fontWeight: 700, fontSize: 26,
                 color: theme.ink, letterSpacing: theme.letterDisplay,
-              }}>Akcijas 🔥</div>
+              }}>{t('home.saleTitle', 'Akcijas 🔥')}</div>
               <button onClick={() => nav('sale')} style={{
                 all: 'unset', cursor: 'pointer', fontFamily: theme.body, fontSize: 13,
                 color: theme.accent, fontWeight: 700,
-              }}>Visas akcijas &rarr;</button>
+              }}>{t('home.allSales', 'Visas akcijas →')}</button>
             </div>
             <div style={{
               display: 'flex', gap: 14, padding: '0 20px', overflowX: 'auto',
@@ -346,7 +346,7 @@ function HomeScreen({ theme, nav, tone, heroLayout, cardStyle, intent, subtotal,
           <button onClick={() => nav('content', { key: 'reviews' })} style={{
             all: 'unset', cursor: 'pointer', marginTop: 14,
             fontFamily: theme.body, fontSize: 13, fontWeight: 700, color: theme.accent,
-          }}>Lasīt visas atsauksmes →</button>
+          }}>{t('home.allReviews', 'Lasīt visas atsauksmes →')}</button>
         </div>
       </div>
 

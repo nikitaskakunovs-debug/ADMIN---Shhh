@@ -4,6 +4,7 @@
 // HOME
 // ─────────────────────────────────────────────────────────────
 function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite, quickBuy }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const featured = PRODUCTS.slice(0, 4);
   const all = PRODUCTS;
   const isFav = (id) => favourites.includes(id);
@@ -31,7 +32,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
                 fontFamily: DT.body, fontSize: 12, fontWeight: 700,
                 letterSpacing: DT.lc, textTransform: 'uppercase',
                 color: DT.inkSoft, marginBottom: 24,
-              }}>Adult shop · for every body</div>
+              }}>{t('home.kicker', 'Adult shop · for every body')}</div>
               <h1 style={{
                 fontFamily: DT.display, fontWeight: 800, fontSize: 88,
                 letterSpacing: DT.ld, lineHeight: 0.92,
@@ -85,7 +86,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
               <h2 style={{
                 fontFamily: DT.display, fontWeight: 800, fontSize: 44,
                 letterSpacing: DT.ld, lineHeight: 1, margin: 0,
-              }}>Shop by category 🍒</h2>
+              }}>{t('home.shopByCategory', 'Shop by category 🍒')}</h2>
               <button onClick={() => nav('browse', { cat: 'all' })} style={{
                 all: 'unset', cursor: 'pointer', fontFamily: DT.body, fontWeight: 700, fontSize: 14, color: DT.ink,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -214,7 +215,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
                 <h2 style={{
                   fontFamily: DT.display, fontWeight: 800, fontSize: 56,
                   letterSpacing: DT.ld, lineHeight: 1, margin: 0,
-                }}>How it stays a secret. 🤫</h2>
+                }}>{t('home.secretTitle', 'How it stays a secret. 🤫')}</h2>
               </div>
               <GhostBtn onClick={() => nav('packaging')}>See the box</GhostBtn>
             </div>
@@ -334,7 +335,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
               <button onClick={() => nav('content', { key: 'reviews' })} style={{
                 all: 'unset', cursor: 'pointer', fontFamily: DT.body, fontSize: 14, fontWeight: 700, color: DT.accent,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-              }}>Lasīt visas atsauksmes <DIcon name="arrow" size={16} color={DT.accent} /></button>
+              }}>{t('home.allReviews2', 'Lasīt visas atsauksmes')} <DIcon name="arrow" size={16} color={DT.accent} /></button>
             </div>
           </div>
         </Container>
@@ -405,7 +406,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
                 <h3 style={{
                   fontFamily: DT.display, fontWeight: 800, fontSize: 32,
                   letterSpacing: DT.ld, margin: '0 0 8px', lineHeight: 1,
-                }}>Whisper kit · on us</h3>
+                }}>{t('home.giftTitle', 'Whisper kit · on us')}</h3>
                 <p style={{
                   fontFamily: DT.body, fontSize: 13, color: DT.inkSoft, lineHeight: 1.5, margin: '0 0 14px',
                 }}>
@@ -469,7 +470,7 @@ function DBrowse({ nav, params, favourites, toggleFavourite, quickBuy, openWelco
               <h1 style={{
                 fontFamily: DT.display, fontWeight: 800, fontSize: 68,
                 letterSpacing: DT.ld, lineHeight: 1, margin: 0,
-              }}>Browse 🍒</h1>
+              }}>{t('home.browse', 'Browse 🍒')}</h1>
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 18,

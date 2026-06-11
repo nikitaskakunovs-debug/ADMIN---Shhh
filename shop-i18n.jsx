@@ -74,6 +74,16 @@ const LANG_STRINGS = {
   'browse.sort': { en: 'Sort', lv: 'Kārtot', ru: 'Сортировка', lt: 'Rūšiuoti', et: 'Sorteeri' },
   'browse.pieces': { en: 'pieces', lv: 'gabali', ru: 'товаров', lt: 'vienetai', et: 'tükki' },
 
+  // ─── Home page sections (editable) ───
+  'home.saleTitle': { en: 'Sale 🔥', lv: 'Akcijas 🔥', ru: 'Скидки 🔥', lt: 'Išpardavimas 🔥', et: 'Soodustus 🔥' },
+  'home.allSales': { en: 'All sales →', lv: 'Visas akcijas →', ru: 'Все скидки →', lt: 'Visi išpardavimai →', et: 'Kõik soodustused →' },
+  'home.allReviews': { en: 'Read all reviews →', lv: 'Lasīt visas atsauksmes →', ru: 'Все отзывы →', lt: 'Visi atsiliepimai →', et: 'Kõik arvustused →' },
+  'home.allReviews2': { en: 'Read all reviews', lv: 'Lasīt visas atsauksmes', ru: 'Все отзывы', lt: 'Visi atsiliepimai', et: 'Kõik arvustused' },
+  'home.shopByCategory': { en: 'Shop by category 🍒', lv: 'Iepērcies pēc kategorijas 🍒', ru: 'Покупки по категориям 🍒', lt: 'Pirkti pagal kategoriją 🍒', et: 'Osta kategooria järgi 🍒' },
+  'home.secretTitle': { en: 'How it stays a secret. 🤫', lv: 'Kā tas paliek noslēpumā. 🤫', ru: 'Как это остаётся секретом. 🤫', lt: 'Kaip tai lieka paslaptyje. 🤫', et: 'Kuidas see jääb saladuseks. 🤫' },
+  'home.giftTitle': { en: 'Whisper kit · on us', lv: 'Čukstu komplekts · no mums', ru: 'Whisper kit · в подарок', lt: 'Whisper kit · dovanų', et: 'Whisper kit · meilt' },
+  'home.browse': { en: 'Browse 🍒', lv: 'Pārlūkot 🍒', ru: 'Смотреть 🍒', lt: 'Naršyti 🍒', et: 'Sirvi 🍒' },
+
   // ─── Menu / cart / account (editable) ───
   'menu.shop': { en: 'Shop', lv: 'Veikals', ru: 'Магазин', lt: 'Parduotuvė', et: 'Pood' },
   'menu.wishlist': { en: 'Wishlist', lv: 'Vēlmes', ru: 'Избранное', lt: 'Pageidavimai', et: 'Soovid' },
