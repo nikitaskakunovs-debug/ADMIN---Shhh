@@ -278,4 +278,17 @@ window.SHHH_LIVE = {
     }
     return created.id;
   },
+
+  // Insert a new brand. Returns the created row (mapped for window.BRANDS).
+  async insertBrand(brand) {
+    if (!this.session) throw new Error('Not signed in.');
+    const row = {
+      id: brand.id, name: brand.name,
+      country: brand.country || null, kind: brand.kind || null,
+      margin: brand.margin || null, blurb: brand.blurb || null,
+      featured: !!brand.featured,
+    };
+    const res = await this._rest('brands', 'POST', row, 'return=representation');
+    return (await res.json())[0];
+  },
 };

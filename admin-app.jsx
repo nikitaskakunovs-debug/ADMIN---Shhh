@@ -21,6 +21,7 @@ function AdminApp() {
   const params = activeTab.params || {};
   React.useEffect(() => { try { localStorage.setItem('shhh_admin_tabs', JSON.stringify({ tabs, activeId })); } catch (e) {} }, [tabs, activeId]);
   const [orders, setOrders] = React.useState(initial.orders);
+  const [brands, setBrands] = React.useState(() => window.BRANDS || []);
   const [stock, setStock] = React.useState(initial.stock);
   const [prices, setPrices] = React.useState(initial.prices);
   const [reviews, setReviews] = React.useState(initial.reviews);
@@ -259,6 +260,29 @@ function AdminApp() {
     }), 'Duplicate order');
   };
   const removeOrders = (refs) => { checkpoint('Deleted ' + (refs.length > 1 ? refs.length + ' orders' : 'order #' + refs[0])); setOrders(prev => prev.filter(o => !refs.includes(o.ref))); log('order', 'Deleted', refs.length > 1 ? refs.length + ' orders' : refs[0], ''); dbOrder(window.SHHH_LIVE && window.SHHH_LIVE.deleteOrders(refs), 'Delete order'); };
+  // Create a brand: validate, write to the DB, then add it to the live list.
+  // Returns a Promise that rejects with a user-facing message on failure.
+  const slugify = (s) => String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const addBrand = async (data) => {
+    const name = (data.name || '').trim();
+    if (!name) throw new Error('Brand name is required.');
+    const id = (data.id && data.id.trim()) || slugify(name);
+    if (!id) throw new Error('Could not derive a slug — add letters or numbers to the name.');
+    if ((brands || []).some(b => b.id === id)) throw new Error('A brand with the slug “' + id + '” already exists.');
+    const brand = { id, name, country: (data.country || '').trim().toUpperCase() || null, kind: data.kind || null, margin: data.margin || null, blurb: (data.blurb || '').trim() || null, featured: false };
+    if (window.SHHH_LIVE && window.SHHH_LIVE.session) {
+      const created = await window.SHHH_LIVE.insertBrand(brand);
+      Object.assign(brand, created); // adopt server-canonical row
+    } else if (window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+      throw new Error('Sign in to add brands.');
+    }
+    const next = [...brands, brand];
+    setBrands(next);
+    window.BRANDS = next; // keep the global other screens read in sync
+    log('brand', 'Created brand', name, id);
+    toast('Brand “' + name + '” added.');
+    return brand;
+  };
   // Push a product change to the database (signed-in sessions only); the
   // local copy always updates, and a toast warns if the DB write fails.
   const dbSave = (id, patch, what) => {
@@ -323,6 +347,7 @@ function AdminApp() {
     stock, setStockVal, prices, setProduct,
     reviews, setReviews: setReviewsU, returns, setReturns: setReturnsU, replyToReturn,
     promos, setPromos: setPromosLogged, cards, setCards: setCardsLogged, brandFeatured, setBrandFeatured: setBrandFeaturedLogged,
+    brands, addBrand,
     customers: deriveCustomers(scopedOrders, crm), crmNote, crmErase, crmSetMarketing, crmToggleTag,
     audit, log,
     cms, saveCms, toast, confirm, role,

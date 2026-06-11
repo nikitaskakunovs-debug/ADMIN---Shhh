@@ -894,12 +894,76 @@ function AContent({ ctx }) {
 // ─────────────────────────────────────────────────────────────
 // BRANDS
 // ─────────────────────────────────────────────────────────────
+function ABrandModal({ onClose, onSubmit }) {
+  const [name, setName] = React.useState('');
+  const [slug, setSlug] = React.useState('');
+  const [slugEdited, setSlugEdited] = React.useState(false);
+  const [country, setCountry] = React.useState('');
+  const [kind, setKind] = React.useState('Partner brand');
+  const [margin, setMargin] = React.useState('medium');
+  const [blurb, setBlurb] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState('');
+
+  const autoSlug = (s) => String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const onName = (v) => { setName(v); if (!slugEdited) setSlug(autoSlug(v)); };
+  const ready = name.trim() && !busy;
+
+  const go = async () => {
+    if (!ready) return;
+    setBusy(true); setErr('');
+    try { await onSubmit({ name, id: slug, country, kind, margin, blurb }); onClose(); }
+    catch (e) { setErr((e && e.message) || 'Could not add the brand.'); setBusy(false); }
+  };
+
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); onClose(); } };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(10,10,10,0.5)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" style={{ width: 480, maxWidth: '100%', maxHeight: '92vh', display: 'flex', flexDirection: 'column', background: AT.panel, borderRadius: AT.radius, boxShadow: '0 30px 90px rgba(0,0,0,0.45)', overflow: 'hidden', animation: 'aConfirmIn .14s ease-out' }}>
+        <div style={{ padding: '22px 24px 18px', display: 'flex', gap: 14, borderBottom: `1px solid ${AT.ruleSoft}` }}>
+          <span style={{ width: 44, height: 44, borderRadius: 999, flexShrink: 0, background: '#E9ECFF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><AIcon name="brands" size={21} color={AT.accent} /></span>
+          <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
+            <div style={{ fontFamily: AT.display, fontWeight: 800, fontSize: 18.5, letterSpacing: AT.ld, color: AT.ink, lineHeight: 1.2 }}>Add a brand</div>
+            <div style={{ fontFamily: AT.body, fontSize: 13, color: AT.inkSoft, marginTop: 5, lineHeight: 1.45 }}>New brands appear in the directory and can be assigned to products.</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ all: 'unset', cursor: 'pointer', width: 30, height: 30, borderRadius: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><AIcon name="x" size={17} color={AT.inkSoft} /></button>
+        </div>
+        <div style={{ padding: '18px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <AField label="Brand name"><AInput value={name} onChange={e => onName(e.target.value)} placeholder="e.g. Maison Lune" autoFocus /></AField>
+          <AField label="Slug" hint="Lowercase id used in links and product assignment.">
+            <AInput value={slug} onChange={e => { setSlug(e.target.value); setSlugEdited(true); }} placeholder="maison-lune" style={{ fontFamily: AT.mono }} />
+          </AField>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <AField label="Country" hint="2-letter code, optional."><AInput value={country} onChange={e => setCountry(e.target.value.toUpperCase().slice(0, 2))} placeholder="FR" /></AField>
+            <ASelect label="Type" value={kind} onChange={setKind} options={[{ value: 'In-house label', label: 'In-house label' }, { value: 'Partner brand', label: 'Partner brand' }, { value: 'Consignment', label: 'Consignment' }]} />
+          </div>
+          <ASelect label="Margin" value={margin} onChange={setMargin} options={[{ value: 'high', label: 'High' }, { value: 'medium', label: 'Medium' }, { value: 'low', label: 'Low' }]} />
+          <AField label="Blurb" hint="Optional one-liner shown in the directory.">
+            <textarea value={blurb} onChange={e => setBlurb(e.target.value)} rows={2} style={{ ...aInputStyle, resize: 'vertical', minHeight: 56 }} placeholder="Short description…" />
+          </AField>
+          {err && <div style={{ padding: '9px 12px', borderRadius: 8, background: '#F3E0E0', color: '#9A2A2A', fontFamily: AT.body, fontSize: 12.5, fontWeight: 600 }}>{err}</div>}
+        </div>
+        <div style={{ padding: '14px 24px', borderTop: `1px solid ${AT.ruleSoft}`, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <ABtn kind="ghost" size="md" onClick={onClose}>Cancel</ABtn>
+          <ABtn kind="primary" size="md" onClick={go} disabled={!ready}>{busy ? 'Adding…' : 'Add brand'}</ABtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ABrands({ ctx }) {
-  const { toast, brandFeatured, setBrandFeatured } = ctx;
-  const brands = window.BRANDS || [];
+  const { toast, brandFeatured, setBrandFeatured, addBrand } = ctx;
+  const brands = ctx.brands || window.BRANDS || [];
   const [q, setQ] = React.useState('');
   const [onlyFeatured, setOnlyFeatured] = React.useState(false);
   const [sort, setSort] = React.useState('name');
+  const [adding, setAdding] = React.useState(false);
   const featured = brandFeatured || {};
   const toggleFeat = (id) => setBrandFeatured({ ...featured, [id]: !featured[id] });
   let list = brands.filter(b => !q || b.name.toLowerCase().includes(q.toLowerCase()));
@@ -923,9 +987,10 @@ function ABrands({ ctx }) {
           <ASelect label="Sort" value={sort} onChange={setSort} options={[{ value: 'name', label: 'A–Z' }, { value: 'name-d', label: 'Z–A' }]} />
           <span style={{ fontFamily: AT.body, fontSize: 12.5, color: AT.inkSoft, whiteSpace: 'nowrap' }}>{list.length} of {brands.length}</span>
           <ASearch value={q} onChange={setQ} placeholder="Search brands…" />
-          <ABtn kind="primary" size="md" onClick={() => toast('Add brand (demo)')}><AIcon name="plus" size={15} /> Add brand</ABtn>
+          <ABtn kind="primary" size="md" onClick={() => setAdding(true)}><AIcon name="plus" size={15} /> Add brand</ABtn>
         </div>
       </div>
+      {adding && <ABrandModal onClose={() => setAdding(false)} onSubmit={addBrand} />}
       <ATable columns={[{ label: 'Brand' }, { label: 'Slug' }, { label: 'Featured' }, { label: '', align: 'right' }]}>
         {list.slice(0, 80).map(b => (
           <tr key={b.id}>
