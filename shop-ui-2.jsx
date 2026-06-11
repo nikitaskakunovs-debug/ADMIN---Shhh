@@ -159,11 +159,11 @@ function WelcomeFlow({ theme, onClose, onApply, dense = false }) {
 // ─────────────────────────────────────────────────────────────
 // WelcomeModal — overlay on first visit and on demand
 // ─────────────────────────────────────────────────────────────
-function WelcomeModal({ theme, open, onClose, onApply }) {
+function WelcomeModal({ theme, open, onClose, onApply, frameless = false }) {
   if (!open) return null;
   return (
     <div style={{
-      position: 'absolute', inset: 0, zIndex: 100,
+      position: frameless ? 'fixed' : 'absolute', inset: 0, zIndex: 100,
       background: 'rgba(15,15,15,0.45)',
       backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center'

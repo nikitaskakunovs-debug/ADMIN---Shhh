@@ -104,7 +104,7 @@ Object.assign(window, { TRACKING, COOKIE_REGISTRY, readConsent, writeConsent, ap
 // ─────────────────────────────────────────────────────────────
 // ConsentBanner — bottom bar + customise modal
 // ─────────────────────────────────────────────────────────────
-function ConsentBanner({ theme, open, onClose, forceCustomize }) {
+function ConsentBanner({ theme, open, onClose, forceCustomize, frameless = false }) {
   const [view, setView] = React.useState('bar'); // 'bar' | 'customize'
   const [langOpen, setLangOpen] = React.useState(false);
   const langCtx = (typeof useLang === 'function') ? useLang() : { lang: 'lv', setLang: () => {} };
@@ -130,7 +130,7 @@ function ConsentBanner({ theme, open, onClose, forceCustomize }) {
 
   return (
     <div style={{
-      position: 'absolute', inset: 0, zIndex: 130,
+      position: frameless ? 'fixed' : 'absolute', inset: 0, zIndex: 130,
       display: 'flex',
       alignItems: view === 'customize' ? 'flex-end' : 'flex-end',
       justifyContent: view === 'customize' ? 'center' : 'flex-start',

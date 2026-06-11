@@ -499,7 +499,7 @@ function ProductCard({ product, theme, variant = 'image', onClick, isFavourite, 
 // ─────────────────────────────────────────────────────────────
 // Bottom tab bar (persistent on most screens)
 // ─────────────────────────────────────────────────────────────
-function BottomBar({ theme, current, onNav, cartCount = 0 }) {
+function BottomBar({ theme, current, onNav, cartCount = 0, frameless = false }) {
   const t = typeof useT === 'function' ? useT() : (k, fb) => fb || k;
   const Item = ({ id, icon, label }) => {
     const active = current === id;
@@ -530,8 +530,8 @@ function BottomBar({ theme, current, onNav, cartCount = 0 }) {
   };
   return (
     <div style={{
-      position: 'absolute', bottom: 0, left: 0, right: 0,
-      paddingBottom: 26, paddingTop: 4,
+      position: frameless ? 'fixed' : 'absolute', bottom: 0, left: 0, right: 0,
+      paddingBottom: frameless ? 'calc(8px + env(safe-area-inset-bottom, 0px))' : 26, paddingTop: 4,
       background: theme.bg + 'EE',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       borderTop: `1px solid ${theme.rule}`,

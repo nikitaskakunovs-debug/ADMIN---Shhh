@@ -238,7 +238,7 @@ function MobileHeader({ theme, nav, cartCount, favCount, openMenu, openWelcome, 
 // ─────────────────────────────────────────────────────────────
 // MobileMenu — slide-in drawer
 // ─────────────────────────────────────────────────────────────
-function MobileMenu({ theme, open, onClose, nav, openWelcome, favCount = 0 }) {
+function MobileMenu({ theme, open, onClose, nav, openWelcome, favCount = 0, frameless = false }) {
   const langCtx = (typeof useLang === 'function') ? useLang() : { lang: 'lv', setLang: () => {} };
   if (!open) return null;
   const ink = '#FFFFFF';
@@ -283,7 +283,7 @@ function MobileMenu({ theme, open, onClose, nav, openWelcome, favCount = 0 }) {
 
   return (
     <div onClick={onClose} style={{
-      position: 'absolute', inset: 0, zIndex: 100,
+      position: frameless ? 'fixed' : 'absolute', inset: 0, zIndex: 100,
       background: 'rgba(0,0,0,0.55)',
       backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
       display: 'flex', justifyContent: 'flex-end',

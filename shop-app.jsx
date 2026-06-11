@@ -165,19 +165,26 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   };
 
   const body = (
-    <div style={{
+    <div style={frameless ? {
+      // Real phone: grow with content so the DOCUMENT scrolls (this is what
+      // lets iOS Safari collapse its toolbar). Clip horizontal drift.
+      minHeight: '100dvh', background: theme.bg, color: theme.ink,
+      fontFamily: theme.body, position: 'relative', overflowX: 'hidden',
+    } : {
       width: '100%', height: '100%',
       background: theme.bg, color: theme.ink,
       fontFamily: theme.body,
       position: 'relative', overflow: 'hidden',
     }}>
-      <div style={{
+      <div style={frameless ? {
+        // Flush to the top (browser owns the status-bar area); leave room at
+        // the bottom for the fixed nav bar + the home-indicator safe area.
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))',
+      } : {
         position: 'absolute', inset: 0, overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
-        // In the device mock-up, clear the fake iOS status bar + dynamic
-        // island; on a real phone the browser owns that area, so only pad
-        // for notch safe-areas plus a little breathing room.
-        paddingTop: frameless ? 'calc(env(safe-area-inset-top, 0px) + 10px)' : 50,
+        paddingTop: 50, // clear the mock-up's fake status bar + dynamic island
       }}>
         <MobileHeader theme={theme} nav={nav}
           cartCount={cartCount} favCount={favCount}
@@ -281,22 +288,23 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       </div>
 
       {screen !== 'checkout' && (
-        <BottomBar theme={theme} current={screen} onNav={nav} cartCount={cartCount} />
+        <BottomBar theme={theme} current={screen} onNav={nav} cartCount={cartCount} frameless={frameless} />
       )}
 
       <MobileMenu theme={theme} open={menuOpen}
         onClose={() => setMenuOpen(false)} nav={nav}
-        openWelcome={openWelcome} favCount={favCount} />
+        openWelcome={openWelcome} favCount={favCount} frameless={frameless} />
 
       <WelcomeModal theme={theme} open={welcomeOpen}
         onClose={() => setWelcomeOpen(false)}
-        onApply={onApplyIntent} />
+        onApply={onApplyIntent} frameless={frameless} />
 
       {/* Cookie consent — small banner, shown once on entry */}
       {typeof ConsentBanner === 'function' && (
         <ConsentBanner theme={theme}
           open={!consentDone}
           forceCustomize={consentReopen}
+          frameless={frameless}
           onClose={() => { setConsentDone(true); setConsentReopen(false); }} />
       )}
     </div>
@@ -305,10 +313,9 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   return (
     <LangProvider>
       {frameless ? (
-        // Real mobile site: fill the actual viewport, no device mock-up.
-        <div style={{ position: 'fixed', inset: 0, background: theme.bg, WebkitFontSmoothing: 'antialiased' }}>
-          {body}
-        </div>
+        // Real mobile site: render in normal document flow so the page itself
+        // scrolls (lets iOS Safari collapse its toolbar). body grows with content.
+        body
       ) : (
         <IOSDevice width={402} height={874} dark={false}>
           {body}

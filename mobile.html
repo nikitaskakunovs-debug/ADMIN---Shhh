@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <!-- build: v8.1 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Shhh — diskrēts seksa veikals · intīmpreces ar piegādi Baltijā</title>
 <meta name="description" content="Diskrēts pieaugušo veikals. Vienkārša kaste, anonīms maksājums, ķermenim droši materiāli. Piegāde Baltijā 24h.">
 <meta name="robots" content="index,follow">
@@ -21,7 +21,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-  html, body { margin: 0; padding: 0; background: #ECECEA; min-height: 100vh; overflow-x: hidden; }
+  html, body { margin: 0; padding: 0; background: #ECECEA; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+  /* Real shop fills the viewport edge-to-edge; the showroom (?stage=1) keeps its own padding. */
+  body.shhh-live { background: #0A0A0A; }
+  body.shhh-live #root { width: 100%; overflow-x: hidden; }
   body {
     font-family: 'Manrope', system-ui, sans-serif;
     color: #0A0A0A;
@@ -383,6 +386,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
   // Real visitors get the shop full-screen; ?stage=1 opens the design
   // showroom (device frame, screen pins, tweaks panel) for prototyping.
   const showStage = new URLSearchParams(location.search).get('stage') === '1';
+  if (!showStage) document.body.classList.add('shhh-live');
   const t = TWEAK_DEFAULTS;
   root.render(showStage ? <Stage /> : (
     <ShopApp frameless themeId="velvet"
