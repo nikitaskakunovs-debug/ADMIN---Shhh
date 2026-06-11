@@ -124,6 +124,26 @@ function DAppInner() {
     return Math.max(0, goods - (pd.discount || 0) + shipping);
   };
 
+  // Record the order in the database (anonymous-safe RPC; server re-prices
+  // from the catalog). Local flow never blocks on the network; the real DB
+  // ref replaces the local one when it arrives.
+  const submitOrderToDb = (order, paid) => {
+    const live = window.SHHH_LIVE;
+    if (!live || live.status === 'fallback') return;
+    const d = window.__shhhCheckoutDetails || {};
+    live.placeOrder({
+      items: (order.items || []).map(i => ({ id: i.id, qty: i.qty })),
+      email: d.email || '', name: d.name || '',
+      payMethod: order.payMethod || '', courier: d.courier || '',
+      locker: d.location || d.address || '', market: 'LV', paid: !!paid,
+    }).then(r => {
+      if (!r || !r.ref) return;
+      console.info('[shhh] order recorded in the database as ' + r.ref);
+      setLastOrder(prev => (prev && prev.ref === order.ref) ? { ...prev, ref: r.ref, dbRef: r.ref } : prev);
+      setOrders(prev => prev.map(o => o.ref === order.ref ? { ...o, ref: r.ref, dbRef: r.ref } : o));
+    }).catch(e => console.warn('[shhh] order DB write failed', e));
+  };
+
   const placeOrder = (payMethod) => {
     const items = cart;
     const total = orderTotal(items);
@@ -133,6 +153,7 @@ function DAppInner() {
       setLastOrder(order);
       setOrders(prev => [order, ...prev]);
       window.__shhhLastTransferOrder = order;
+      submitOrderToDb(order, false);
       setCart([]);
       setScreen('transferConfirm');
       return;
@@ -141,12 +162,14 @@ function DAppInner() {
     if (pendingMethods.includes(payMethod) && Math.random() < 0.5) {
       const order = { ref, items, total, status: 'Gaida apmaksu', payMethod, paid: false };
       setLastOrder(order);
+      submitOrderToDb(order, false);
       setScreen('pending');
       return;
     }
     const order = { ref, items, total, status: 'Confirmed · arrives tomorrow', payMethod, paid: true };
     setLastOrder(order);
     setOrders(prev => [order, ...prev]);
+    submitOrderToDb(order, true);
     setCart([]);
     setAppliedPromo(null);
     setScreen('confirmation');
@@ -157,13 +180,24 @@ function DAppInner() {
       if (!prev) return prev;
       const done = { ...prev, status: 'Confirmed · arrives tomorrow', paid: true };
       setOrders(o => [done, ...o]);
+      if (prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'paid').catch(e => console.warn('[shhh] mark paid failed', e));
+      }
       return done;
     });
     setCart([]);
     setAppliedPromo(null);
     setScreen('confirmation');
   };
-  const cancelPendingOrder = () => { setLastOrder(null); setScreen('cart'); };
+  const cancelPendingOrder = () => {
+    setLastOrder(prev => {
+      if (prev && prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'cancelled').catch(e => console.warn('[shhh] cancel failed', e));
+      }
+      return null;
+    });
+    setScreen('cart');
+  };
 
   const onApplyIntent = (data) => {
     setIntent({ forWho: data.forWho || [], vibe: data.vibe || [] });

@@ -105,6 +105,27 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
     setParams({ mode: 'fast' });
   };
 
+  // Record the order in the database (anonymous-safe RPC). The server
+  // re-prices everything from the catalog; we keep the local order flowing
+  // regardless so checkout never blocks on the network. The real DB ref
+  // replaces the local one on the confirmation screen when it arrives.
+  const submitOrderToDb = (order, paid) => {
+    const live = window.SHHH_LIVE;
+    if (!live || live.status === 'fallback') return;
+    const d = window.__shhhCheckoutDetails || {};
+    live.placeOrder({
+      items: (order.items || []).map(i => ({ id: i.id, qty: i.qty })),
+      email: d.email || '', name: d.name || '',
+      payMethod: order.payMethod || '', courier: d.courier || '',
+      locker: d.location || d.address || '', market: 'LV', paid: !!paid,
+    }).then(r => {
+      if (!r || !r.ref) return;
+      console.info('[shhh] order recorded in the database as ' + r.ref);
+      setLastOrder(prev => (prev && prev.ref === order.ref) ? { ...prev, ref: r.ref, dbRef: r.ref } : prev);
+      setOrders(prev => prev.map(o => o.ref === order.ref ? { ...o, ref: r.ref, dbRef: r.ref } : o));
+    }).catch(e => console.warn('[shhh] order DB write failed', e));
+  };
+
   const placeOrder = (payMethod) => {
     const items = cart;
     const total = items.reduce((s, i) => {
@@ -117,6 +138,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       const order = { ref, items, total, status: 'Gaida apmaksu', payMethod, paid: false, transfer: true, details: window.__shhhCheckoutDetails || null };
       setLastOrder(order);
       setOrders(prev => [order, ...prev]);
+      submitOrderToDb(order, false);
       setCart([]);
       setScreen('transferConfirm');
       return;
@@ -128,12 +150,14 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
     if (isRedirect && Math.random() < 0.5) {
       const order = { ref, items, total, status: 'Gaida apmaksu', payMethod, paid: false, details: window.__shhhCheckoutDetails || null };
       setLastOrder(order);
+      submitOrderToDb(order, false);
       setScreen('pending');
       return;
     }
     const order = { ref, items, total, status: 'Confirmed · arrives tomorrow', payMethod, paid: true };
     setLastOrder(order);
     setOrders(prev => [order, ...prev]);
+    submitOrderToDb(order, true);
     setCart([]);
     setScreen('confirmation');
   };
@@ -144,6 +168,9 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       if (!prev) return prev;
       const done = { ...prev, status: 'Confirmed · arrives tomorrow', paid: true };
       setOrders(o => [done, ...o]);
+      if (prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'paid').catch(e => console.warn('[shhh] mark paid failed', e));
+      }
       return done;
     });
     setCart([]);
@@ -151,7 +178,12 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   };
 
   const cancelPendingOrder = () => {
-    setLastOrder(null);
+    setLastOrder(prev => {
+      if (prev && prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
+        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'cancelled').catch(e => console.warn('[shhh] cancel failed', e));
+      }
+      return null;
+    });
     setScreen('cart');
   };
 

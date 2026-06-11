@@ -364,6 +364,29 @@ window.SHHH_LIVE = {
     return publicUrl;
   },
 
+  // ── Storefront checkout (anonymous shoppers, via controlled RPCs) ──
+  async placeOrder(p) {
+    const res = await fetch(this.url + '/rest/v1/rpc/place_order', {
+      method: 'POST', headers: this._headers(true), body: JSON.stringify({ p }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error('Order save failed (HTTP ' + res.status + '): ' + t.slice(0, 140));
+    }
+    return res.json(); // { ref, total, status }
+  },
+
+  async setOrderStatus(ref, status) {
+    const res = await fetch(this.url + '/rest/v1/rpc/set_order_status', {
+      method: 'POST', headers: this._headers(true),
+      body: JSON.stringify({ p_ref: ref, p_status: status }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error('Status update failed (HTTP ' + res.status + '): ' + t.slice(0, 140));
+    }
+  },
+
   // Insert a new catalog product. Returns the created DB row.
   async insertProduct(p) {
     if (!this.session) throw new Error('Not signed in.');

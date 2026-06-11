@@ -322,6 +322,15 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
   const [sender, setSender] = React.useState('nl');
   const [anonOpen, setAnonOpen] = React.useState(false);
   const courierObj = COURIERS.find(c => c.id === courier) || COURIERS[0];
+  // Expose the contact/delivery details for the order record (same contract
+  // as the mobile checkout) so placed orders carry the customer info.
+  React.useEffect(() => {
+    window.__shhhCheckoutDetails = {
+      name: name || '', email: email || '', phone: phone || '',
+      courier: courierObj ? courierObj.name : courier,
+      location: location || '',
+    };
+  }, [name, email, phone, courier, location]);
   const baseShip = subtotal > 60 ? 0 : courierObj.price;
   const pd = React.useMemo(() => {
     if (typeof promoDiscount === 'function' && appliedPromo) {
