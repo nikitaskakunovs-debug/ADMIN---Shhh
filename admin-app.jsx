@@ -215,7 +215,7 @@ function AdminApp() {
     if (!window.SHHH_LIVE || !window.SHHH_LIVE.session) return;
     Promise.resolve(promise).catch(e => {
       console.warn('[shhh] order DB write failed', e);
-      toast('⚠ ' + (what || 'Order change') + ' saved locally, but the database update failed.');
+      toast('⚠ ' + (what || 'Order change') + ' not saved to the database: ' + ((e && e.message) || 'unknown error'));
     });
   };
   const updateOrder = (ref, patch) => {

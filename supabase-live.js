@@ -230,10 +230,18 @@ window.SHHH_LIVE = {
   },
 
   // Record a refund; also flips the order to 'refunded' when fully covered.
+  // Orders restored from older local sessions carry no DB uuid, so fall back
+  // to resolving it by ref — and fail loudly if the order isn't in the DB.
   async addRefund(orderUuid, ref, amount, reason, fully) {
     if (!this.session) throw new Error('Not signed in.');
+    let id = orderUuid;
+    if (!id) {
+      const rows = await this.fetch('orders?select=id&ref=eq.' + encodeURIComponent(ref));
+      if (!rows.length) throw new Error('Order ' + ref + ' exists only in this browser — it is not in the database.');
+      id = rows[0].id;
+    }
     await this._rest('refunds', 'POST',
-      { order_id: orderUuid, amount: Math.round((Number(amount) || 0) * 100) / 100, reason: reason || null },
+      { order_id: id, amount: Math.round((Number(amount) || 0) * 100) / 100, reason: reason || null },
       'return=minimal');
     if (fully) await this._rest('orders?ref=eq.' + encodeURIComponent(ref), 'PATCH', { status: 'refunded' }, 'return=minimal');
   },
