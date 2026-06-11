@@ -151,6 +151,7 @@ function DConfirmation({ nav, lastOrder }) {
 // ACCOUNT — Orders + Favourites + Settings
 // ─────────────────────────────────────────────────────────────
 function DAccount({ nav, params, orders, favourites, toggleFavourite, quickBuy }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const [view, setView] = React.useState(params?.tab || 'orders');
   const favProducts = favourites.map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
 
@@ -253,10 +254,10 @@ function DAccount({ nav, params, orders, favourites, toggleFavourite, quickBuy }
             {view === 'settings' && (
               <div style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { icon: 'box', l: 'Discreet packaging', s: 'On — outer box is unmarked' },
-                  { icon: 'card', l: 'Anonymous billing', s: 'On — appears as "NL Trading Co"' },
-                  { icon: 'eyeOff', l: 'Auto-hide order history', s: 'After 30 days post-delivery' },
-                  { icon: 'lock', l: 'Biometric on launch', s: 'Off — tap to enable' },
+                  { icon: 'box', l: t('acc.discreetPack', 'Discreet packaging'), s: t('acc.discreetPackSub', 'On — outer box is unmarked') },
+                  { icon: 'card', l: t('acc.anonBilling', 'Anonymous billing'), s: t('acc.anonBillingSub', 'On — appears as "NL Trading Co"') },
+                  { icon: 'eyeOff', l: t('acc.autoHide', 'Auto-hide order history'), s: t('acc.autoHideSub', 'After 30 days post-delivery') },
+                  { icon: 'lock', l: t('acc.biometric', 'Biometric on launch'), s: t('acc.biometricSub', 'Off — tap to enable') },
                 ].map(s => (
                   <div key={s.l} style={{
                     padding: 16, borderRadius: DT.radius, background: DT.surface,

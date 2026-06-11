@@ -1445,7 +1445,7 @@ function CartScreen({ theme, nav, cart, updateQty, addToCart, subtotal: subtotal
                         padding: '4px 10px', borderRadius: theme.radiusPill,
                         background: theme.accent, color: theme.accentInk,
                         letterSpacing: 0.4, textTransform: 'uppercase',
-                      }}>Free gift 🎁</span>
+                      }}>{t('cart.freeGift', 'Free gift 🎁')}</span>
                     ) : (
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 0,
@@ -1554,7 +1554,7 @@ function CartScreen({ theme, nav, cart, updateQty, addToCart, subtotal: subtotal
             </div>
             {appliedPromo && pd.discount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-                <span style={{ fontFamily: theme.body, fontSize: 12, color: theme.accent, fontWeight: 600 }}>Atlaide · {appliedPromo.code}</span>
+                <span style={{ fontFamily: theme.body, fontSize: 12, color: theme.accent, fontWeight: 600 }}>{t('cart.discount', 'Atlaide')} · {appliedPromo.code}</span>
                 <span style={{ fontFamily: theme.mono, fontSize: 13, color: theme.accent }}>−€{pd.discount.toFixed(2)}</span>
               </div>
             )}

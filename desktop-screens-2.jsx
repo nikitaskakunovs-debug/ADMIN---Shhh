@@ -4,6 +4,7 @@
 // CART — two-column: items + summary
 // ─────────────────────────────────────────────────────────────
 function DCart({ nav, cart, updateQty, addToCart, subtotal, appliedPromo, setAppliedPromo }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const items = cart.map(c => ({
     ...c, product: c.id === 'gift' ? GIFT_PRODUCT : PRODUCTS.find(p => p.id === c.id),
   })).filter(i => i.product);
@@ -86,7 +87,7 @@ function DCart({ nav, cart, updateQty, addToCart, subtotal, appliedPromo, setApp
                           background: DT.accent, color: '#fff', display: 'inline-block',
                           fontFamily: DT.body, fontWeight: 700, fontSize: 11, letterSpacing: 0.4,
                           textTransform: 'uppercase',
-                        }}>Free gift 🎁</div>
+                        }}>{t('cart.freeGift', 'Free gift 🎁')}</div>
                       )}
                     </div>
                     <div style={{ textAlign: 'right' }}>

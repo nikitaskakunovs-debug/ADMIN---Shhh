@@ -74,6 +74,27 @@ const LANG_STRINGS = {
   'browse.sort': { en: 'Sort', lv: 'Kārtot', ru: 'Сортировка', lt: 'Rūšiuoti', et: 'Sorteeri' },
   'browse.pieces': { en: 'pieces', lv: 'gabali', ru: 'товаров', lt: 'vienetai', et: 'tükki' },
 
+  // ─── Menu / cart / account (editable) ───
+  'menu.shop': { en: 'Shop', lv: 'Veikals', ru: 'Магазин', lt: 'Parduotuvė', et: 'Pood' },
+  'menu.wishlist': { en: 'Wishlist', lv: 'Vēlmes', ru: 'Избранное', lt: 'Pageidavimai', et: 'Soovid' },
+  'menu.bag': { en: 'Bag', lv: 'Grozs', ru: 'Корзина', lt: 'Krepšelis', et: 'Korv' },
+  'menu.orders': { en: 'My orders', lv: 'Mani pasūtījumi', ru: 'Мои заказы', lt: 'Mano užsakymai', et: 'Minu tellimused' },
+  'menu.sale': { en: 'Sale 🔥', lv: 'Akcijas 🔥', ru: 'Скидки 🔥', lt: 'Išpardavimas 🔥', et: 'Soodustus 🔥' },
+  'menu.giftcard': { en: 'Gift card 🎁', lv: 'Dāvanu karte 🎁', ru: 'Подарочная карта 🎁', lt: 'Dovanų kortelė 🎁', et: 'Kinkekaart 🎁' },
+  'menu.footerHint': { en: 'Everything else is in the footer ↓', lv: 'Visa pārējā info atrodama lapas kājenē ↓', ru: 'Остальное — в подвале страницы ↓', lt: 'Visa kita — puslapio apačioje ↓', et: 'Ülejäänu on jaluses ↓' },
+  'cart.freeGift': { en: 'Free gift 🎁', lv: 'Bezmaksas dāvana 🎁', ru: 'Подарок 🎁', lt: 'Dovana 🎁', et: 'Tasuta kingitus 🎁' },
+  'cart.discount': { en: 'Discount', lv: 'Atlaide', ru: 'Скидка', lt: 'Nuolaida', et: 'Allahindlus' },
+  'account.bag': { en: 'Your bag', lv: 'Tava soma', ru: 'Ваша корзина', lt: 'Tavo krepšelis', et: 'Sinu korv' },
+  'account.wishlist': { en: 'Wishlist', lv: 'Vēlmes', ru: 'Избранное', lt: 'Pageidavimai', et: 'Soovid' },
+  'acc.discreetPack': { en: 'Discreet packaging', lv: 'Diskrēts iepakojums', ru: 'Скрытная упаковка', lt: 'Diskretiškas pakavimas', et: 'Diskreetne pakend' },
+  'acc.discreetPackSub': { en: 'On — outer box is unmarked', lv: 'Ieslēgts — kaste bez apzīmējumiem', ru: 'Вкл — коробка без маркировки', lt: 'Įjungta — dėžė nepažymėta', et: 'Sees — karp on märgistuseta' },
+  'acc.anonBilling': { en: 'Anonymous billing', lv: 'Anonīma maksāšana', ru: 'Анонимная оплата', lt: 'Anoniminis atsiskaitymas', et: 'Anonüümne arveldus' },
+  'acc.anonBillingSub': { en: 'On — appears as "NL Trading Co"', lv: 'Ieslēgts — izrakstā "NL Trading Co"', ru: 'Вкл — в выписке "NL Trading Co"', lt: 'Įjungta — išraše "NL Trading Co"', et: 'Sees — väljavõttel "NL Trading Co"' },
+  'acc.autoHide': { en: 'Auto-hide order history', lv: 'Automātiski slēpt pasūtījumu vēsturi', ru: 'Авто-скрытие истории заказов', lt: 'Automatiškai slėpti užsakymų istoriją', et: 'Peida tellimuste ajalugu automaatselt' },
+  'acc.autoHideSub': { en: 'After 30 days post-delivery', lv: '30 dienas pēc piegādes', ru: 'Через 30 дней после доставки', lt: 'Po 30 dienų nuo pristatymo', et: '30 päeva pärast tarnet' },
+  'acc.biometric': { en: 'Biometric on launch', lv: 'Biometrija atverot', ru: 'Биометрия при запуске', lt: 'Biometrija paleidžiant', et: 'Biomeetria avamisel' },
+  'acc.biometricSub': { en: 'Off — tap to enable', lv: 'Izslēgts — pieskaries, lai ieslēgtu', ru: 'Выкл — нажмите, чтобы включить', lt: 'Išjungta — palieskite, kad įjungtumėte', et: 'Väljas — puuduta lubamiseks' },
+
   // ─── Cart / Checkout ───
   'cart.title': { en: 'Your bag 🛍️', lv: 'Tava soma 🛍️', ru: 'Ваша корзина 🛍️', lt: 'Tavo krepšys 🛍️', et: 'Sinu kott 🛍️' },
   'cart.empty': { en: 'Empty.', lv: 'Tukša.', ru: 'Пусто.', lt: 'Tuščia.', et: 'Tühi.' },

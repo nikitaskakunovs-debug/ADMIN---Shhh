@@ -239,6 +239,7 @@ function MobileHeader({ theme, nav, cartCount, favCount, openMenu, openWelcome, 
 // MobileMenu — slide-in drawer
 // ─────────────────────────────────────────────────────────────
 function MobileMenu({ theme, open, onClose, nav, openWelcome, favCount = 0, frameless = false }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const langCtx = (typeof useLang === 'function') ? useLang() : { lang: 'lv', setLang: () => {} };
   if (!open) return null;
   const ink = '#FFFFFF';
@@ -313,17 +314,17 @@ function MobileMenu({ theme, open, onClose, nav, openWelcome, favCount = 0, fram
 
         {/* Primary nav — short and bold */}
         <div style={{ flex: 1 }}>
-          <NavItem icon="search" label="Veikals"
+          <NavItem icon="search" label={t('menu.shop', 'Veikals')}
             onClick={() => go('category', { cat: 'all' })} />
-          <NavItem icon="heart" label="Vēlmes" badge={favCount}
+          <NavItem icon="heart" label={t('menu.wishlist', 'Vēlmes')} badge={favCount}
             onClick={() => go('account', { tab: 'favourites' })} />
-          <NavItem icon="bag" label="Grozs"
+          <NavItem icon="bag" label={t('menu.bag', 'Grozs')}
             onClick={() => go('cart')} />
-          <NavItem icon="box" label="Mani pasūtījumi"
+          <NavItem icon="box" label={t('menu.orders', 'Mani pasūtījumi')}
             onClick={() => go('content', { key: 'order-lookup' })} />
-          <NavItem icon="zap" label="Akcijas 🔥" accent
+          <NavItem icon="zap" label={t('menu.sale', 'Akcijas 🔥')} accent
             onClick={() => go('sale')} />
-          <NavItem icon="gift" label="Dāvanu karte 🎁"
+          <NavItem icon="gift" label={t('menu.giftcard', 'Dāvanu karte 🎁')}
             onClick={() => go('giftcard')} />
 
           {/* Match CTA */}
@@ -366,7 +367,7 @@ function MobileMenu({ theme, open, onClose, nav, openWelcome, favCount = 0, fram
           padding: '18px 24px', borderTop: `1px solid ${rule}`,
           fontFamily: theme.mono, fontSize: 10, color: inkSoft, letterSpacing: 0.4,
         }}>
-          <div>Visa pārējā info atrodama lapas kājenē ↓</div>
+          <div>{t('menu.footerHint', 'Visa pārējā info atrodama lapas kājenē ↓')}</div>
           <div style={{ marginTop: 6 }}>© {new Date().getFullYear()} Shhh… · Rīga</div>
         </div>
       </div>

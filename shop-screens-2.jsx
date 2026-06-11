@@ -1420,8 +1420,8 @@ function AccountScreen({ theme, nav, orders, params, favourites = [], toggleFavo
       <div style={{ padding: '0 20px 8px', display: 'flex', gap: 8 }}>
         {[
           ['orders', t('account.orders', 'Pasūtījumi')],
-          ['favourites', `Vēlmes${favProducts.length ? ' · ' + favProducts.length : ''}`],
-          ['bag', 'Tava soma'],
+          ['favourites', `${t('account.wishlist', 'Vēlmes')}${favProducts.length ? ' · ' + favProducts.length : ''}`],
+          ['bag', t('account.bag', 'Tava soma')],
         ].map(([id, label]) => (
           <button key={id} onClick={() => id === 'bag' ? nav('cart') : setView(id)} style={{
             all: 'unset', cursor: 'pointer', padding: '8px 14px',
@@ -1492,10 +1492,10 @@ function AccountScreen({ theme, nav, orders, params, favourites = [], toggleFavo
       {view === 'settings' && (
         <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
-            { icon: 'box', label: 'Discreet packaging', sub: 'On — outer box is unmarked' },
-            { icon: 'card', label: 'Anonymous billing', sub: 'On — appears as "NL Trading Co"' },
-            { icon: 'eyeOff', label: 'Auto-hide order history', sub: 'After 30 days post-delivery' },
-            { icon: 'lock', label: 'Biometric on launch', sub: 'Off — tap to enable' },
+            { icon: 'box', label: t('acc.discreetPack', 'Discreet packaging'), sub: t('acc.discreetPackSub', 'On — outer box is unmarked') },
+            { icon: 'card', label: t('acc.anonBilling', 'Anonymous billing'), sub: t('acc.anonBillingSub', 'On — appears as "NL Trading Co"') },
+            { icon: 'eyeOff', label: t('acc.autoHide', 'Auto-hide order history'), sub: t('acc.autoHideSub', 'After 30 days post-delivery') },
+            { icon: 'lock', label: t('acc.biometric', 'Biometric on launch'), sub: t('acc.biometricSub', 'Off — tap to enable') },
           ].map(s => (
             <div key={s.label} style={{
               padding: 14, borderRadius: theme.radius, background: theme.surface,
