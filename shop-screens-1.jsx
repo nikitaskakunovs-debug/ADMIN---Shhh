@@ -631,7 +631,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
           background: theme.ink, color: theme.bg,
           fontFamily: theme.body, fontSize: 13, fontWeight: 700,
           boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap',
-        }}>Saglabāts ♥</div>
+        }}>{t('pdp.saved', 'Saglabāts ♥')}</div>
       )}
       {/* Header */}
       <div style={{
@@ -716,13 +716,13 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                   <span style={{ padding: '4px 9px', borderRadius: 6, background: '#E0282E', color: '#fff', fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>−{Math.round((1 - product.price / product.oldPrice) * 100)}%</span>
                 )}
                 {product.isNew && (
-                  <span style={{ padding: '4px 9px', borderRadius: 6, background: '#1F8A4C', color: '#fff', fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>Jaunums</span>
+                  <span style={{ padding: '4px 9px', borderRadius: 6, background: '#1F8A4C', color: '#fff', fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>{t('pdp.badgeNew', 'Jaunums')}</span>
                 )}
                 {product.clearance && (
-                  <span style={{ padding: '4px 9px', borderRadius: 6, background: '#E07B00', color: '#fff', fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>Izpārdošana</span>
+                  <span style={{ padding: '4px 9px', borderRadius: 6, background: '#E07B00', color: '#fff', fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>{t('pdp.badgeSale', 'Izpārdošana')}</span>
                 )}
                 {product.badge === 'Bestseller' && (
-                  <span style={{ padding: '4px 9px', borderRadius: 6, background: theme.ink, color: theme.bg, fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>Bestsellers</span>
+                  <span style={{ padding: '4px 9px', borderRadius: 6, background: theme.ink, color: theme.bg, fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>{t('pdp.badgeBestseller', 'Bestsellers')}</span>
                 )}
                 {product.stock === 'low' && (
                   <span style={{ padding: '4px 9px', borderRadius: 6, background: '#fff', color: '#E0282E', border: '1px solid #E0282E', fontFamily: theme.body, fontSize: 11, fontWeight: 700 }}>Atlicis 2 gab.</span>
@@ -835,7 +835,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
             <span style={{ color: theme.ink, fontFamily: theme.mono, fontWeight: 600 }}>{product.code || product.id}</span>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ color: theme.inkSoft, minWidth: 56 }}>Zīmols:</span>
+            <span style={{ color: theme.inkSoft, minWidth: 56 }}>{t('pdp.brand', 'Zīmols:')}</span>
             {(() => {
               const brandName = product.brand || 'Shhh';
               const bm = (window.BRANDS || []).find(x => x.name === brandName);
@@ -856,7 +856,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
           fontFamily: theme.body, fontSize: 11, fontWeight: 600,
           letterSpacing: theme.letterCaps, textTransform: 'uppercase',
           color: theme.inkSoft, minWidth: 56,
-        }}>Krāsa</div>
+        }}>{t('pdp.colour', 'Krāsa')}</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {product.swatches.map((c, i) => (
             <button key={i} onClick={() => pickColour(i)} aria-label={(product.colourNames || [])[i] || ('Krāsa ' + (i+1))} style={{
@@ -881,7 +881,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
             fontFamily: theme.body, fontSize: 11, fontWeight: 600,
             letterSpacing: theme.letterCaps, textTransform: 'uppercase',
             color: theme.inkSoft, minWidth: 56,
-          }}>Izmērs</div>
+          }}>{t('pdp.size', 'Izmērs')}</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {product.sizes.map((s, i) => {
               const on = sizeIdx === i;
@@ -995,7 +995,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
               <button onClick={() => setAboutOpen(o => !o)} style={{
                 all: 'unset', cursor: 'pointer', marginTop: 8,
                 fontFamily: theme.body, fontSize: 13, fontWeight: 700, color: theme.accent,
-              }}>{aboutOpen ? 'Rādīt mazāk' : 'Lasīt vairāk'}</button>
+              }}>{aboutOpen ? t('pdp.readLess', 'Rādīt mazāk') : t('pdp.readMore', 'Lasīt vairāk')}</button>
             </div>
           );
         })()}
@@ -1074,7 +1074,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                   all: 'unset', cursor: 'pointer', marginTop: 12,
                   fontFamily: theme.body, fontSize: 13, fontWeight: 700, color: theme.accent,
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                }}>Pilnās instrukcijas <Icon name="arrow" size={14} color={theme.accent} /></button>
+                }}>{t('pdp.fullInstructions', 'Pilnās instrukcijas')} <Icon name="arrow" size={14} color={theme.accent} /></button>
               </div>
             </div>
           );
@@ -1147,7 +1147,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                   <div style={{ fontFamily: theme.body, fontSize: 13, color: theme.inkSoft, lineHeight: 1.5 }}>{r.body}</div>
                 </div>
               ))}
-              {all.length === 0 && <span>Vēl nav atsauksmju. Esi pirmais!</span>}
+              {all.length === 0 && <span>{t('pdp.noReviews', 'Vēl nav atsauksmju. Esi pirmais!')}</span>}
               <ReviewForm theme={theme} productName={product.name}
                 onSubmitted={(rev) => {
                   setLocalReviews(prev => [rev, ...prev]);
@@ -1232,7 +1232,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
         }}>
           <span>🔒 Diskrēta piegāde</span>
           <span style={{ opacity: 0.4 }}>·</span>
-          <span>Anonīms maksājums</span>
+          <span>{t('pdp.anonPayment', 'Anonīms maksājums')}</span>
           <span style={{ opacity: 0.4 }}>·</span>
           <span>30 dienu atgriešana</span>
         </div>
@@ -1271,7 +1271,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                 border: `1.5px solid ${theme.ink}`, color: theme.ink,
                 fontFamily: theme.body, fontWeight: 700, fontSize: 15,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>Turpināt iepirkties</button>
+              }}>{t('pdp.continueShopping', 'Turpināt iepirkties')}</button>
               <PrimaryButton theme={theme} size="lg" onClick={() => { setAddedSheet(null); nav('cart'); }}>
                 Skatīt grozu →
               </PrimaryButton>
@@ -1326,7 +1326,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                     cursor: 'pointer', flex: 1.5, height: 44, borderRadius: theme.radiusPill,
                     fontFamily: theme.body, fontWeight: 700, fontSize: 13,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>Pievienot grozam</button>
+                  }}>{t('pdp.addToCart', 'Pievienot grozam')}</button>
                 </div>
               </>
             ) : (
@@ -1354,7 +1354,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                     border: `1.5px solid ${theme.rule}`, color: theme.ink,
                     fontFamily: theme.body, fontWeight: 700, fontSize: 14,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>Skatīt grozu</button>
+                  }}>{t('pdp.viewCart', 'Skatīt grozu')}</button>
                 </div>
               </>
             )}

@@ -592,6 +592,7 @@ function DBrowse({ nav, params, favourites, toggleFavourite, quickBuy, openWelco
 // PDP — split layout
 // ─────────────────────────────────────────────────────────────
 function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const product = PRODUCTS.find(p => p.id === params?.id) || PRODUCTS[0];
   const [swatch, setSwatch] = React.useState(0);
   const [sizeIdx, setSizeIdx] = React.useState(0);
@@ -769,7 +770,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                   <span style={{ color: DT.ink, fontFamily: DT.mono, fontWeight: 600 }}>{product.code || product.id}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ color: DT.inkSoft, minWidth: 56 }}>Zīmols:</span>
+                  <span style={{ color: DT.inkSoft, minWidth: 56 }}>{t('pdp.brand', 'Zīmols:')}</span>
                   {(() => {
                     const brandName = product.brand || 'Shhh';
                     const bm = (window.BRANDS || []).find(x => x.name === brandName);
@@ -787,7 +788,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                 <div style={{
                   fontFamily: DT.body, fontSize: 11, fontWeight: 700,
                   letterSpacing: DT.lc, textTransform: 'uppercase', color: DT.inkSoft, minWidth: 56,
-                }}>Krāsa</div>
+                }}>{t('pdp.colour', 'Krāsa')}</div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   {images.map((c, i) => (
                     <button key={i} onClick={() => setSwatch(i)}
@@ -809,7 +810,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                   <div style={{
                     fontFamily: DT.body, fontSize: 11, fontWeight: 700,
                     letterSpacing: DT.lc, textTransform: 'uppercase', color: DT.inkSoft, minWidth: 56,
-                  }}>Izmērs</div>
+                  }}>{t('pdp.size', 'Izmērs')}</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {product.sizes.map((s, i) => {
                       const on = sizeIdx === i;
@@ -887,7 +888,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                     nav('cart');
                   }}
                   style={{ flex: 1 }}>
-                  Add to bag
+                  {t('pdp.addToCart', 'Add to bag')}
                 </GhostBtn>
                 <PrimaryBtn size="lg"
                   onClick={() => quickBuy(product.id, { colour: (product.colourNames || [])[swatch], size: (product.sizes || [])[sizeIdx] })}
@@ -921,7 +922,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                 display: 'flex', gap: 28, marginTop: 36,
                 borderBottom: `1px solid ${DT.rule}`,
               }}>
-                {[['about', 'About'], ['care', 'Care'], ['howto', 'Lietošana'], ['ship', 'Shipping'], ['reviews', 'Reviews']].map(([id, l]) => (
+                {[['about', t('pdp.tabAbout', 'About')], ['care', t('pdp.tabCare', 'Care')], ['howto', t('pdp.tabHowto', 'Lietošana')], ['ship', t('pdp.tabShipping', 'Shipping')], ['reviews', t('pdp.tabReviews', 'Reviews')]].map(([id, l]) => (
                   <button key={id} onClick={() => setTab(id)} style={{
                     all: 'unset', cursor: 'pointer', padding: '12px 0',
                     fontFamily: DT.body, fontWeight: 700, fontSize: 14,
@@ -1019,7 +1020,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
               <h2 style={{
                 fontFamily: DT.display, fontWeight: 800, fontSize: 44,
                 letterSpacing: DT.ld, margin: '0 0 28px', lineHeight: 1,
-              }}>Goes well with 💘</h2>
+              }}>{t('pdp.goesWellWith', 'Goes well with 💘')}</h2>
               <div style={{
                 display: 'grid', gridTemplateColumns: `repeat(${Math.min(pairs.length, 4)}, 1fr)`, gap: 24,
               }}>
