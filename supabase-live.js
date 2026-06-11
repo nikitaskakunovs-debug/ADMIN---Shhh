@@ -134,11 +134,21 @@ window.SHHH_LIVE = {
     // photos; the code keeps rich presentation fields (desc, swatches, blob…).
     const demo = (window.PRODUCTS && window.PRODUCTS.length) ? window.PRODUCTS : [];
     const demoById = {}; demo.forEach(d => { demoById[d.id] = d; });
+    // Safe presentation defaults so products that have no built-in design data
+    // (e.g. admin-created, or seeded without a storefront match) never crash the
+    // storefront, which assumes these fields always exist.
+    const DEFAULTS = {
+      colours: [], swatches: ['#CBB9AE'], colourNames: ['Default'], sizes: [],
+      blob: 'M50,8 C74,8 92,26 92,50 C92,74 74,92 50,92 C26,92 8,74 8,50 C8,26 26,8 50,8 Z',
+      desc: '', tagline: '', ptype: '', material: '—', weight: '', length: '',
+      modes: 0, decibels: 0, waterproof: false, rechargeable: false,
+      rating: 0, reviewCount: 0, badge: '', oldPrice: null, image: null, images: [],
+    };
     let finalProducts;
     if (products.length) {
       finalProducts = products.map(p => {
         const dbImages = (p.product_images || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0)).map(i => i.url);
-        const base = demoById[p.legacy_id] || {};
+        const base = Object.assign({}, DEFAULTS, demoById[p.legacy_id] || {});
         const merged = Object.assign({}, base, {
           id: p.legacy_id || p.sku, code: p.sku, sku: p.sku, name: p.name,
           price: Number(p.price), stock: p.stock, status: p.status,
@@ -151,6 +161,12 @@ window.SHHH_LIVE = {
         if (p.category_id) merged.category = p.category_id;
         if (p.color) merged.color = p.color;
         if (p.sizes && p.sizes.length) merged.sizes = p.sizes; else if (!merged.sizes) merged.sizes = [];
+        // Keep colour-name labels aligned with the swatch count to avoid gaps.
+        if (!Array.isArray(merged.swatches) || !merged.swatches.length) merged.swatches = DEFAULTS.swatches.slice();
+        if (!Array.isArray(merged.colourNames) || merged.colourNames.length < merged.swatches.length) {
+          merged.colourNames = merged.swatches.map((_, i) => (merged.colourNames && merged.colourNames[i]) || 'Colour ' + (i + 1));
+        }
+        if (!Array.isArray(merged.colours)) merged.colours = [];
         const images = dbImages.length ? dbImages : (base.images || (base.image ? [base.image] : []));
         merged.images = images.map(fixImg);
         merged.image = merged.images[0] || null;
