@@ -57,7 +57,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
   const applyGift = () => {
     const code = giftCode.trim().toUpperCase();
     const card = (window.GIFT_CARDS || {})[code];
-    if (!card) { setGiftErr('Nederīgs vai neeksistējošs kods'); setGiftCard(null); return; }
+    if (!card) { setGiftErr(t('ck.invalidCode', 'Nederīgs vai neeksistējošs kods')); setGiftCard(null); return; }
     if (card.balance <= 0) { setGiftErr('Šai kartei nav atlikuma'); setGiftCard(null); return; }
     setGiftErr('');
     setGiftCard({ code, balance: card.balance, initial: card.initial });
@@ -121,7 +121,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
       </div>
       {appliedPromo && pd.discount > 0 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: theme.body, fontSize: 12, color: theme.accent, marginTop: 4 }}>
-          <span>Atlaide · {appliedPromo.code}</span><span style={{ fontFamily: theme.mono }}>−€{pd.discount.toFixed(2)}</span>
+          <span>{t('ck.discount', 'Atlaide')} · {appliedPromo.code}</span><span style={{ fontFamily: theme.mono }}>−€{pd.discount.toFixed(2)}</span>
         </div>
       )}
       {giftApplied > 0 && (
@@ -179,14 +179,14 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
 
   const Contact = () => (
     <div style={{ padding: '0 20px 8px' }}>
-      <Field label="Alias name for the parcel" value={name} onChange={setName}
+      <Field label={t('ck.fieldAlias', 'Alias name for the parcel')} value={name} onChange={setName}
         placeholder="M. M. (or your real name — your call)" />
-      <Field label="Email for tracking" value={contact} onChange={setContact}
+      <Field label={t('ck.fieldEmail', 'Email for tracking')} value={contact} onChange={setContact}
         placeholder="you+shhh@gmail.com" type="email" />
       <div style={{ fontFamily: theme.body, fontSize: 11, color: theme.inkSoft, marginBottom: 12, marginTop: -4 }}>
         One email when it ships. Deleted 30 days after delivery. Try a + alias.
       </div>
-      <Field label={`Phone ${needsAddress ? '(required for door)' : '(optional — for locker SMS)'}`}
+      <Field label={needsAddress ? t('ck.phoneDoor', 'Phone (required for door)') : t('ck.phoneLocker', 'Phone (optional — for locker SMS)')}
         value={phone} onChange={setPhone}
         placeholder="+371 …" type="tel" />
     </div>
@@ -194,17 +194,17 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
 
   const Address = () => (
     <div style={{ padding: '0 20px 8px' }}>
-      <Field label="Street + house" value={address.line1}
+      <Field label={t('ck.fieldStreet', 'Street + house')} value={address.line1}
         onChange={v => setAddress({ ...address, line1: v })}
         placeholder="Brīvības iela 68" />
       <div style={{ display: 'flex', gap: 10 }}>
         <div style={{ flex: 1.4 }}>
-          <Field label="City" value={address.city}
+          <Field label={t('ck.fieldCity', 'City')} value={address.city}
             onChange={v => setAddress({ ...address, city: v })}
             placeholder="Rīga" />
         </div>
         <div style={{ flex: 1 }}>
-          <Field label="Postal" value={address.postal}
+          <Field label={t('ck.fieldPostal', 'Postal')} value={address.postal}
             onChange={v => setAddress({ ...address, postal: v })}
             placeholder="LV-1011" />
         </div>
@@ -249,7 +249,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
         }}>
           <span style={{
             fontFamily: theme.body, fontSize: 14, fontWeight: 700, color: theme.ink, flex: 1,
-          }}>Pasūtījums · {items.reduce((s, i) => s + i.qty, 0)} preces</span>
+          }}>{t('ck.orderSummary', 'Pasūtījums')} · {items.reduce((s, i) => s + i.qty, 0)} {t('ck.itemsWord', 'preces')}</span>
           <span style={{
             fontFamily: theme.display, fontWeight: 700, fontSize: 20, color: theme.ink,
             letterSpacing: theme.letterDisplay,
@@ -289,7 +289,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
               fontFamily: theme.body, fontSize: 12, fontWeight: 600, color: theme.inkSoft,
               display: 'inline-flex', alignItems: 'center', gap: 4,
             }}>
-              {showItems ? 'Slēpt' : 'Skatīt preces'}
+              {showItems ? t('ck.hideItems', 'Slēpt') : t('ck.showItems', 'Skatīt preces')}
               <span style={{
                 width: 15, height: 15, borderRadius: 999, border: `1.2px solid ${theme.inkSoft}`,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -343,7 +343,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
             </div>
             {appliedPromo && pd.discount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: theme.body, fontSize: 13, color: theme.accent }}>
-                <span>Atlaide · {appliedPromo.code}</span>
+                <span>{t('ck.discount', 'Atlaide')} · {appliedPromo.code}</span>
                 <span style={{ fontFamily: theme.mono }}>−€{pd.discount.toFixed(2)}</span>
               </div>
             )}
@@ -451,7 +451,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
             <button onClick={() => { setGiftCard(null); setGiftCode(''); }} style={{
               all: 'unset', cursor: 'pointer', fontFamily: theme.body, fontSize: 12,
               color: theme.inkSoft, textDecoration: 'underline',
-            }}>Noņemt</button>
+            }}>{t('ck.remove', 'Noņemt')}</button>
           </div>
           {/* Balance bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: theme.body, fontSize: 12, marginBottom: 4 }}>
@@ -489,7 +489,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
           <div style={{ flex: 1, minWidth: 0 }}>
             <span style={{
               fontFamily: theme.body, fontSize: 13, fontWeight: 700, color: theme.ink,
-            }}>Promo kods vai dāvanu karte</span>
+            }}>{t('ck.promoOrGift', 'Promo kods vai dāvanu karte')}</span>
             {/* Applied chips visible when collapsed */}
             {!open && (appliedPromo || giftCard) && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
@@ -560,7 +560,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
           fontFamily: theme.display, fontSize: 24, lineHeight: 1,
           letterSpacing: theme.letterDisplay, color: theme.ink, fontWeight: 700,
           marginBottom: 12, marginTop: 6,
-        }}>Maksāšanas veids 💳</div>
+        }}>{t('ck.payTitle', 'Maksāšanas veids 💳')}</div>
 
         {(() => {
           const banks = PAYMENT_METHODS.filter(m => m.kind === 'banklink');
@@ -574,9 +574,9 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
           const GROUPS = [
             { id: 'tap',  icon: '⚡', label: 'Tap & pay', hint: 'Apple Pay · Google Pay' },
             { id: 'bank', icon: '🏦', label: 'Banklink', hint: 'Citadele · Swedbank · SEB · Luminor' },
-            { id: 'bnpl', icon: '📅', label: 'Maksā vēlāk', hint: 'Inbank · Klix' },
-            { id: 'card', icon: '💳', label: 'Karte', hint: 'Visa · Mastercard · Amex' },
-            { id: 'transfer', icon: '🧾', label: 'Bankas pārskaitījums', hint: 'Apmaksā pēc rēķina saņemšanas' },
+            { id: 'bnpl', icon: '📅', label: t('ck.payBnpl', 'Maksā vēlāk'), hint: 'Inbank · Klix' },
+            { id: 'card', icon: '💳', label: t('ck.payCard', 'Karte'), hint: 'Visa · Mastercard · Amex' },
+            { id: 'transfer', icon: '🧾', label: t('ck.payTransfer', 'Bankas pārskaitījums'), hint: t('ck.payTransferHint', 'Apmaksā pēc rēķina saņemšanas') },
           ];
           const Row = ({ g, children }) => {
             const isOpen = openGroup === g.id;
@@ -748,7 +748,7 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
         }}>
           <Icon name="lock" size={14} color={theme.ink} />
           <span style={{ fontFamily: theme.body, fontSize: 11, color: theme.inkSoft }}>
-            🔒 Šifrēts · TLS 1.3 · izrakstā "NL Trading Co"
+            {t('ck.secureLine', '🔒 Šifrēts · TLS 1.3 · izrakstā "NL Trading Co"')}
           </span>
         </div>
         </>
@@ -929,28 +929,28 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
       }}>
         {[
           {
-            label: 'Alias',
+            label: t('ck.alias', 'Alias'),
             value: name, set: setName,
             placeholder: 'M. M. (or your real name)',
-            hint: 'Goes on the parcel label. We don\u2019t verify.',
+            hint: t('ck.aliasHint', 'Goes on the parcel label. We don\u2019t verify.'),
             icon: 'ghost',
             type: 'text',
           },
           {
-            label: 'Email',
+            label: t('ck.email', 'Email'),
             value: contact, set: setContact,
             placeholder: 'you+shhh@gmail.com',
-            hint: 'One email when it ships. Try a + alias.',
+            hint: t('ck.emailHint', 'One email when it ships. Try a + alias.'),
             icon: 'eyeOff',
             type: 'email',
           },
           {
-            label: needsAddress ? 'Phone (required for door)' : 'Phone — optional',
+            label: needsAddress ? t('ck.phoneDoor', 'Phone (required for door)') : t('ck.phoneOpt', 'Phone — optional'),
             value: phone, set: setPhone,
             placeholder: '+371 …',
             hint: needsAddress
-              ? 'Courier needs to call you if no one\u2019s home.'
-              : 'Lockers send an SMS code. Leave blank to use email only.',
+              ? t('ck.phoneHintDoor', 'Courier needs to call you if no one\u2019s home.')
+              : t('ck.phoneHintLocker', 'Lockers send an SMS code. Leave blank to use email only.'),
             icon: 'lock',
             type: 'tel',
           },

@@ -177,9 +177,13 @@ window.SHHH_LIVE = {
       finalProducts = demo; // empty DB → keep built-in demo catalog
     }
     // Mutate the shared array in place so the storefront's lexical PRODUCTS
-    // binding (same array object) sees the live data too.
-    if (Array.isArray(window.PRODUCTS)) { window.PRODUCTS.length = 0; Array.prototype.push.apply(window.PRODUCTS, finalProducts); }
-    else window.PRODUCTS = finalProducts;
+    // binding (same array object) sees the live data too. Guard: when the DB
+    // was empty, finalProducts IS window.PRODUCTS — setting length = 0 first
+    // would wipe the source before copying it back into itself.
+    if (finalProducts !== window.PRODUCTS) {
+      if (Array.isArray(window.PRODUCTS)) { window.PRODUCTS.length = 0; Array.prototype.push.apply(window.PRODUCTS, finalProducts); }
+      else window.PRODUCTS = finalProducts;
+    }
 
     // Brands: the DB drives the admin's brand directory. The storefront keeps
     // its own full static directory (window.BRANDS there is presentation).

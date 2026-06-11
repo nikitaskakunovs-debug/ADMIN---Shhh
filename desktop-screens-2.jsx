@@ -309,6 +309,7 @@ function DGiftProgress({ subtotal, threshold = GIFT_THRESHOLD }) {
 // CHECKOUT — left form, right summary
 // ─────────────────────────────────────────────────────────────
 function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, setAppliedPromo }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const items = cart.map(c => ({
     ...c, product: c.id === 'gift' ? GIFT_PRODUCT : PRODUCTS.find(p => p.id === c.id),
   })).filter(i => i.product);
@@ -347,7 +348,7 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
     return (
       <main><Section><Container>
         <div style={{ padding: '120px 0', textAlign: 'center', fontFamily: DT.body, color: DT.inkSoft }}>
-          Your bag is empty. <button onClick={() => nav('browse')} style={{ all: 'unset', cursor: 'pointer', color: DT.ink, textDecoration: 'underline', marginLeft: 6 }}>Go shopping →</button>
+          {t('ck.emptyBag', 'Your bag is empty.')} <button onClick={() => nav('browse')} style={{ all: 'unset', cursor: 'pointer', color: DT.ink, textDecoration: 'underline', marginLeft: 6 }}>{t('ck.goShopping', 'Go shopping →')}</button>
         </div>
       </Container></Section></main>
     );
@@ -536,7 +537,7 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
                   <h3 style={{
                     fontFamily: DT.display, fontWeight: 800, fontSize: 28,
                     letterSpacing: DT.ld, margin: '0 0 18px', lineHeight: 1,
-                  }}>How shall we send it? 📦</h3>
+                  }}>{t('ck.howSend', 'How shall we send it? 📦')}</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     {COURIERS.map(c => {
                       const active = courier === c.id;
@@ -753,7 +754,7 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
                       fontFamily: DT.body, fontSize: 11, fontWeight: 700,
                       letterSpacing: DT.lc, textTransform: 'uppercase',
                       color: DT.ink, marginBottom: 10,
-                    }}>Pērc tagad, maksā vēlāk</div>
+                    }}>{t('ck.payBnpl', 'Pērc tagad, maksā vēlāk')}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       {PAYMENT_METHODS.filter(m => m.kind === 'bnpl').map(m => {
                         const active = paymethod === m.id;
@@ -816,7 +817,7 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
                     <div style={{
                       fontFamily: DT.body, fontSize: 11, fontWeight: 700,
                       letterSpacing: DT.lc, textTransform: 'uppercase', color: DT.ink, marginBottom: 10,
-                    }}>Bankas pārskaitījums</div>
+                    }}>{t('ck.payTransfer', 'Bankas pārskaitījums')}</div>
                     <button onClick={() => setPaymethod('transfer')} style={{
                       all: 'unset', cursor: 'pointer', display: 'flex', width: '100%',
                       padding: 18, borderRadius: DT.radius, background: DT.surface,
@@ -861,7 +862,7 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
                   </PrimaryBtn>
                 ) : (
                   <PrimaryBtn size="lg" onClick={() => onComplete(paymethod)}>
-                    {paymethod === 'transfer' ? 'Saņemt rēķinu' : 'Place order'} · €{total.toFixed(2)}
+                    {paymethod === 'transfer' ? t('ck.receiveInvoice', 'Saņemt rēķinu') : t('checkout.placeOrder', 'Place order')} · €{total.toFixed(2)}
                   </PrimaryBtn>
                 )}
               </div>
