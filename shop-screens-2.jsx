@@ -56,12 +56,24 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
 
   const applyGift = () => {
     const code = giftCode.trim().toUpperCase();
+    const live = window.SHHH_LIVE;
+    if (live && live.status !== 'fallback') {
+      // Real balance from the database (the server re-checks at order time too).
+      live.checkGiftCard(code).then(r => {
+        if (!r || !r.ok) { setGiftErr(t('ck.invalidCode', 'Nederīgs vai neeksistējošs kods')); setGiftCard(null); return; }
+        setGiftErr('');
+        setGiftCard({ code: r.code, balance: Number(r.balance), initial: Number(r.initial) });
+      }).catch(() => { setGiftErr(t('ck.invalidCode', 'Nederīgs vai neeksistējošs kods')); setGiftCard(null); });
+      return;
+    }
     const card = (window.GIFT_CARDS || {})[code];
     if (!card) { setGiftErr(t('ck.invalidCode', 'Nederīgs vai neeksistējošs kods')); setGiftCard(null); return; }
     if (card.balance <= 0) { setGiftErr('Šai kartei nav atlikuma'); setGiftCard(null); return; }
     setGiftErr('');
     setGiftCard({ code, balance: card.balance, initial: card.initial });
   };
+  // Expose the applied card so the order submission can settle it server-side.
+  React.useEffect(() => { window.__shhhGiftCard = giftCard ? { code: giftCard.code } : null; }, [giftCard]);
 
   const needsAddress = courierObj.type === 'door';
 

@@ -118,6 +118,8 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       email: d.email || '', name: d.name || '',
       payMethod: order.payMethod || '', courier: d.courier || '',
       locker: d.location || d.address || '', market: 'LV', paid: !!paid,
+      promo: (appliedPromo && appliedPromo.code) || '',
+      giftCard: (window.__shhhGiftCard && window.__shhhGiftCard.code) || '',
     }).then(r => {
       if (!r || !r.ref) return;
       console.info('[shhh] order recorded in the database as ' + r.ref);

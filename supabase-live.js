@@ -248,6 +248,33 @@ window.SHHH_LIVE = {
       catch (e) { console.warn('[shhh] returns load failed', e); }
     }
 
+    // Promo codes: the storefront validates against window.PROMO_CODES — make
+    // the DB the source of truth (only live codes, in window, under limit).
+    try {
+      const promos = await this.fetch('promos?select=code,type,value,status,starts_on,ends_on,usage_limit,used_count,note&status=eq.active');
+      const today = new Date().toISOString().slice(0, 10);
+      const live = {};
+      promos.forEach(pr => {
+        if (pr.starts_on && pr.starts_on > today) return;
+        if (pr.ends_on && pr.ends_on < today) return;
+        if (pr.usage_limit != null && pr.used_count >= pr.usage_limit) return;
+        const v = Number(pr.value) || 0;
+        live[pr.code] = {
+          type: pr.type, value: v,
+          label: pr.type === 'percent' ? ('−' + v + '%') : pr.type === 'fixed' ? ('−€' + v) : 'Bezmaksas piegāde',
+          desc: pr.note || (pr.type === 'shipping' ? 'Bezmaksas piegāde' : 'Atlaide'),
+        };
+      });
+      if (promos.length) {
+        // Mutate the shared object in place so lexical PROMO_CODES sees it.
+        const target = window.PROMO_CODES;
+        if (target && typeof target === 'object') {
+          Object.keys(target).forEach(k => { delete target[k]; });
+          Object.assign(target, live);
+        } else window.PROMO_CODES = live;
+      }
+    } catch (e) { console.warn('[shhh] promo codes load failed', e); }
+
     // Orders are loaded too, into window.LIVE_ORDERS (adminLoad prefers it).
     try { window.LIVE_ORDERS = await this.loadOrders(); }
     catch (e) { console.warn('[shhh] order load failed; using demo orders.', e); }
@@ -482,6 +509,29 @@ window.SHHH_LIVE = {
     await this._rest('cms_overrides?on_conflict=key', 'POST',
       { key, data, updated_at: new Date().toISOString() },
       'resolution=merge-duplicates,return=minimal');
+  },
+
+  // ── Gift cards & promos ──
+  async checkGiftCard(code) {
+    const res = await fetch(this.url + '/rest/v1/rpc/check_gift_card', {
+      method: 'POST', headers: this._headers(true), body: JSON.stringify({ p_code: code }),
+    });
+    if (!res.ok) { const t = await res.text().catch(() => ''); throw new Error('Gift card check failed (HTTP ' + res.status + '): ' + t.slice(0, 120)); }
+    return res.json(); // { ok, code, balance, initial } | { ok:false, error }
+  },
+
+  // Upsert the admin's promo map ({CODE:{type,value,desc,disabled}}) to the DB.
+  async savePromos(map) {
+    if (!this.session) throw new Error('Not signed in.');
+    const rows = Object.keys(map || {}).map(code => ({
+      code,
+      type: map[code].type || 'percent',
+      value: Number(map[code].value) || 0,
+      status: map[code].disabled ? 'paused' : 'active',
+      note: map[code].desc || null,
+    }));
+    if (!rows.length) return;
+    await this._rest('promos?on_conflict=code', 'POST', rows, 'resolution=merge-duplicates,return=minimal');
   },
 
   // ── Storefront checkout (anonymous shoppers, via controlled RPCs) ──

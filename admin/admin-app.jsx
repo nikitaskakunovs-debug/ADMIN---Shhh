@@ -355,7 +355,10 @@ function AdminApp() {
     return { ...prev, tags: { ...prev.tags, [email]: next } };
   }); };
   // Promos / cards / brands — wrap setters so screens log automatically
-  const setPromosLogged = (next) => { checkpoint('Promo code change'); setPromos(next); log('promo', 'Updated codes', '', ''); };
+  const setPromosLogged = (next) => {
+    checkpoint('Promo code change'); setPromos(next); log('promo', 'Updated codes', '', '');
+    dbPush(window.SHHH_LIVE && window.SHHH_LIVE.savePromos(next), 'Promo save');
+  };
   const setCardsLogged = (next) => { checkpoint('Gift card change'); setCards(next); log('promo', 'Updated gift cards', '', ''); };
   const setBrandFeaturedLogged = (next) => { checkpoint('Featured brands'); setBrandFeatured(next); log('brand', 'Featured toggle', '', ''); };
   // CMS: store the full per-language override object and publish to storefront.
