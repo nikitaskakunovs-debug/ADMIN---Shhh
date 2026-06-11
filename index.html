@@ -44,7 +44,10 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-<!-- Storefront data reused as the admin's source of truth -->
+<!-- Live data: Supabase config + loader (plain JS, runs before the app) -->
+<script src="supabase-live.js"></script>
+
+<!-- Storefront data reused as the admin's source of truth (fallback if Supabase is unreachable) -->
 <script type="text/babel" src="shop-data.jsx"></script>
 <script type="text/babel" src="shop-i18n.jsx"></script>
 <script type="text/babel" src="shop-promo.jsx"></script>
@@ -75,7 +78,15 @@
 
 <script type="text/babel" data-presets="env,react">
   const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(<AdminApp />);
+  (async () => {
+    try {
+      await window.SHHH_LIVE.load();
+    } catch (e) {
+      window.SHHH_LIVE.status = 'fallback';
+      console.warn('[shhh] Supabase unavailable — using built-in demo data.', e);
+    }
+    root.render(<AdminApp />);
+  })();
 </script>
 
 </body>
