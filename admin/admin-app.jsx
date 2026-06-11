@@ -41,16 +41,16 @@ function AdminApp() {
   });
   React.useEffect(() => { try { localStorage.setItem('shhh_admin_auth', JSON.stringify(signedIn)); } catch (e) {} }, [signedIn]);
   const signOut = () => { setSignedIn(false); if (window.SHHH_LIVE) window.SHHH_LIVE.signOut(); };
-  // Orders are locked to anonymous users, so the boot loader can't read them.
-  // Once signed in, re-fetch them with the authenticated token.
+  // Anonymous reads hide orders entirely (and hide draft products), so after
+  // sign-in re-pull everything with the authenticated token.
   React.useEffect(() => {
     if (!signedIn) return;
     const live = window.SHHH_LIVE;
     if (!live || !live.session) return;
     let cancelled = false;
-    live.loadOrders()
-      .then(rows => { if (!cancelled && rows && rows.length) { window.LIVE_ORDERS = rows; setOrders(rows); } })
-      .catch(e => console.warn('[shhh] post-login order refresh failed', e));
+    live.load()
+      .then(() => { const rows = window.LIVE_ORDERS; if (!cancelled && rows && rows.length) setOrders(rows); })
+      .catch(e => console.warn('[shhh] post-login refresh failed', e));
     return () => { cancelled = true; };
   }, [signedIn]);
   // Multi-business / multi-market scope (persisted). market 'all' = consolidated.

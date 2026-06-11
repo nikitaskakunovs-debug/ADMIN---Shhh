@@ -125,34 +125,63 @@ window.SHHH_LIVE = {
       this.fetch('categories?select=id,name,position&order=position.asc'),
     ]);
 
-    // Map DB rows → the product shape the admin screens expect.
-    window.PRODUCTS = products.map(p => ({
-      id: p.legacy_id || p.sku,
-      code: p.sku,
-      sku: p.sku,
-      name: p.name,
-      brand: p.brand ? p.brand.name : null,
-      brandId: p.brand ? p.brand.id : null,
-      category: p.category_id,
-      price: Number(p.price),
-      compareAt: p.compare_at == null ? null : Number(p.compare_at),
-      cost: p.cost == null ? null : Number(p.cost),
-      stock: p.stock,
-      status: p.status,
-      color: p.color,
-      sizes: p.sizes || [],
-      rating: 0, // derived from reviews once those move to the DB
-      createdAt: (p.created_at || '').slice(0, 10),
-      images: (p.product_images || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0)).map(i => i.url),
-      image: (p.product_images || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0)).map(i => i.url)[0] || null,
-    }));
-    window.BRANDS = brands;
-    // The catalog screens read window.CATEGORIES ({id, label}).
-    window.CATEGORIES = categories.map(c => ({ id: c.id, label: c.name }));
+    // The admin lives under /admin/, so relative image paths need a hop up.
+    const inAdmin = location.pathname.indexOf('/admin') !== -1;
+    const fixImg = (u) => (u && inAdmin && !/^(https?:)?\//.test(u)) ? '../' + u : u;
 
-    // Keep the storefront object in sync for anything that reads it.
+    // Merge DB truth over the built-in presentation data (keyed by legacy id):
+    // the DB owns existence, price, stock, status, naming, brand, category and
+    // photos; the code keeps rich presentation fields (desc, swatches, blob…).
+    const demo = (window.PRODUCTS && window.PRODUCTS.length) ? window.PRODUCTS : [];
+    const demoById = {}; demo.forEach(d => { demoById[d.id] = d; });
+    let finalProducts;
+    if (products.length) {
+      finalProducts = products.map(p => {
+        const dbImages = (p.product_images || []).slice().sort((a, b) => (a.position || 0) - (b.position || 0)).map(i => i.url);
+        const base = demoById[p.legacy_id] || {};
+        const merged = Object.assign({}, base, {
+          id: p.legacy_id || p.sku, code: p.sku, sku: p.sku, name: p.name,
+          price: Number(p.price), stock: p.stock, status: p.status,
+          compareAt: p.compare_at == null ? null : Number(p.compare_at),
+          oldPrice: p.compare_at == null ? base.oldPrice : Number(p.compare_at),
+          cost: p.cost == null ? (base.cost != null ? base.cost : null) : Number(p.cost),
+          createdAt: (p.created_at || '').slice(0, 10),
+        });
+        if (p.brand) { merged.brand = p.brand.name; merged.brandId = p.brand.id; }
+        if (p.category_id) merged.category = p.category_id;
+        if (p.color) merged.color = p.color;
+        if (p.sizes && p.sizes.length) merged.sizes = p.sizes; else if (!merged.sizes) merged.sizes = [];
+        const images = dbImages.length ? dbImages : (base.images || (base.image ? [base.image] : []));
+        merged.images = images.map(fixImg);
+        merged.image = merged.images[0] || null;
+        if (merged.rating == null) merged.rating = 0;
+        return merged;
+      });
+    } else {
+      finalProducts = demo; // empty DB → keep built-in demo catalog
+    }
+    // Mutate the shared array in place so the storefront's lexical PRODUCTS
+    // binding (same array object) sees the live data too.
+    if (Array.isArray(window.PRODUCTS)) { window.PRODUCTS.length = 0; Array.prototype.push.apply(window.PRODUCTS, finalProducts); }
+    else window.PRODUCTS = finalProducts;
+
+    // Brands: the DB drives the admin's brand directory. The storefront keeps
+    // its own full static directory (window.BRANDS there is presentation).
+    if (inAdmin) window.BRANDS = brands;
+
+    // Categories ({id, label}): keep order/extras of the built-ins, add any
+    // DB categories that actually have products, drop empty built-ins.
+    const usedCats = new Set(finalProducts.map(p => p.category).filter(Boolean));
+    const catList = [];
+    (window.CATEGORIES || []).forEach(c => { if (c.id === 'all' || usedCats.has(c.id)) catList.push(c); });
+    const known = new Set(catList.map(c => c.id));
+    categories.forEach(c => { if (usedCats.has(c.id) && !known.has(c.id)) catList.push({ id: c.id, label: c.name }); });
+    if (Array.isArray(window.CATEGORIES)) { window.CATEGORIES.length = 0; Array.prototype.push.apply(window.CATEGORIES, catList); }
+    else window.CATEGORIES = catList;
+
+    // Legacy overlay for anything reading SHOP_DATA (the old admin fallback).
     if (window.SHOP_DATA) {
-      window.SHOP_DATA.products = window.PRODUCTS;
+      window.SHOP_DATA.products = finalProducts;
       window.SHOP_DATA.categories = categories.map(c => ({ id: c.id, name: c.name }));
     }
 
@@ -161,7 +190,7 @@ window.SHHH_LIVE = {
     catch (e) { console.warn('[shhh] order load failed; using demo orders.', e); }
 
     this.status = 'live';
-    console.info('[shhh] Live catalog loaded from Supabase: ' +
+    console.info('[shhh] Live data loaded from Supabase: ' +
       products.length + ' products, ' + brands.length + ' brands, ' + categories.length + ' categories' +
       (window.LIVE_ORDERS ? ', ' + window.LIVE_ORDERS.length + ' orders' : '') + '.');
     return { products: products.length, brands: brands.length, categories: categories.length };

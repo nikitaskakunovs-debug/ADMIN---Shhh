@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- build: v8.1 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shhh — diskrēts seksa veikals · intīmpreces ar piegādi Baltijā</title>
+<meta name="description" content="Diskrēts pieaugušo veikals. Vienkārša kaste, anonīms maksājums, ķermenim droši materiāli. Piegāde Baltijā 24h.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="canonical" href="https://shhh.lv/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shhh">
+<meta property="og:title" content="Shhh — diskrēts seksa veikals">
+<meta property="og:description" content="Diskrēta piegāde, anonīms maksājums, ķermenim droši materiāli. Piegāde Baltijā 24h.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; background: #ECECEA; min-height: 100vh; overflow-x: hidden; }
+  body {
+    font-family: 'Manrope', system-ui, sans-serif;
+    color: #0A0A0A;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  * { box-sizing: border-box; }
+  button { font: inherit; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  /* --- Pink → Purple → Blue animated CTA gradient (for everyone) --- */
+  @keyframes shhh-cta-flow {
+    0%   { background-position:   0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position:   0% 50%; }
+  }
+  .shhh-grad {
+    background-image: linear-gradient(120deg, #FF4FB8 0%, #B14BE8 35%, #6E4DF8 65%, #2D4BFF 100%);
+    background-size: 220% 220%;
+    animation: shhh-cta-flow 7s ease-in-out infinite;
+    color: #FFFFFF !important;
+    border: none !important;
+  }
+  .shhh-grad-text {
+    background-image: linear-gradient(120deg, #FF4FB8 0%, #B14BE8 35%, #6E4DF8 65%, #2D4BFF 100%);
+    background-size: 220% 220%;
+    animation: shhh-cta-flow 7s ease-in-out infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+  }
+  .shhh-grad-dot {
+    display: inline-block; width: 0.62em; height: 0.62em; border-radius: 50%;
+    background-image: linear-gradient(120deg, #FF4FB8 0%, #B14BE8 35%, #6E4DF8 65%, #2D4BFF 100%);
+    background-size: 220% 220%;
+    animation: shhh-cta-flow 7s ease-in-out infinite;
+    transform: translateY(0.04em);
+    margin-left: 0.04em;
+  }
+  .stage {
+    min-height: 100vh; padding: 32px 24px 48px;
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+  }
+  .head {
+    width: 100%; max-width: 1200px; display: flex;
+    align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  }
+  .head h1 {
+    font-family: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
+    font-weight: 700; font-style: normal;
+    font-size: clamp(40px, 5vw, 64px);
+    margin: 0; line-height: 0.9; letter-spacing: -0.045em;
+    color: #0A0A0A;
+  }
+  .head h1 span.dot { color: #FF4D1F; }
+  .head .lede {
+    max-width: 540px; color: #5A5A58;
+    font-size: 14px; line-height: 1.5;
+  }
+  .meta {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #8A8A86;
+  }
+  .frames {
+    display: grid; grid-template-columns: 1fr; gap: 28px;
+    align-items: start; justify-items: center; width: 100%; max-width: 460px;
+  }
+  .frame-label {
+    display: flex; flex-direction: column; gap: 6px;
+    text-align: center; margin-bottom: 14px;
+  }
+  .frame-label .kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #8A8A86;
+  }
+  .frame-label .name {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    font-weight: 700; font-size: 28px; color: #0A0A0A;
+    letter-spacing: -0.045em; line-height: 1;
+  }
+  .frame-label .desc {
+    color: #5A5A58; font-size: 12px; max-width: 340px;
+    margin: 0 auto;
+  }
+  .frame-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .pin-controls {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    max-width: 402px;
+  }
+  .pin-controls button {
+    all: unset; cursor: pointer; padding: 6px 12px;
+    background: #FFFFFF;
+    border: 1px solid rgba(10,10,10,0.08);
+    color: #5A5A58; border-radius: 999px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    transition: all .15s ease;
+  }
+  .pin-controls button:hover {
+    color: #0A0A0A; background: #F5F5F3;
+  }
+  .pin-controls button.active {
+    background: #0A0A0A; color: #FFFFFF; border-color: #0A0A0A;
+  }
+  .footer-note {
+    width: 100%; max-width: 900px; text-align: center;
+    color: #8A8A86; font-size: 12px; line-height: 1.5;
+    padding-top: 12px;
+  }
+  .footer-note kbd {
+    display: inline-block; padding: 1px 6px; border-radius: 4px;
+    background: #FFFFFF; color: #0A0A0A; border: 1px solid rgba(10,10,10,0.08);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Live catalog: prices, stock and photos come from Supabase (falls back to built-in demo data) -->
+<script src="supabase-live.js"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="shop-data.jsx"></script>
+<script type="text/babel" src="shop-i18n.jsx"></script>
+<script type="text/babel" src="shop-seo.jsx"></script>
+<script type="text/babel" src="shop-ui.jsx"></script>
+<script type="text/babel" src="shop-ui-2.jsx"></script>
+<script type="text/babel" src="shop-chrome.jsx"></script>
+<script type="text/babel" src="shop-consent.jsx"></script>
+<script type="text/babel" src="shop-checkout-bits.jsx"></script>
+<script type="text/babel" src="shop-promo.jsx"></script>
+<script type="text/babel" src="shop-content.jsx"></script>
+<script type="text/babel" src="shop-brands.jsx"></script>
+<script type="text/babel" src="shop-invoice.jsx"></script>
+<script type="text/babel" src="shop-returns.jsx"></script>
+<script type="text/babel" src="shop-cancel.jsx"></script>
+<script type="text/babel" src="shop-usage.jsx"></script>
+<script type="text/babel" src="shop-screens-1.jsx"></script>
+<script type="text/babel" src="shop-screens-2.jsx"></script>
+<script type="text/babel" src="shop-app.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "cardStyle": "image",
+  "heroLayout": "editorial",
+  "checkoutFlow": "steps",
+  "tone": "clinical",
+  "syncFrames": true
+}/*EDITMODE-END*/;
+
+const SCREENS = [
+  { id: 'home', label: 'Home' },
+  { id: 'category', label: 'Browse' },
+  { id: 'product', label: 'Product' },
+  { id: 'cart', label: 'Bag' },
+  { id: 'checkout', label: 'Checkout' },
+  { id: 'confirmation', label: 'Confirm' },
+  { id: 'account', label: 'Account' },
+  { id: 'packaging', label: 'Packaging' },
+  { id: '404', label: '404' },
+];
+
+function Stage() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [screenA, setScreenA] = React.useState('home');
+  const [screenB, setScreenB] = React.useState('home');
+  const [welcomeTrigger, setWelcomeTrigger] = React.useState(0);
+
+  const setBoth = (id) => { setScreenA(id); setScreenB(id); };
+  const triggerWelcome = () => setWelcomeTrigger(x => x + 1);
+
+  return (
+    <div className="stage">
+      <div className="head">
+        <div>
+          <div className="meta">Adult shop · mobile prototype · v3</div>
+          <h1><span className="shhh-grad-text">shhh...</span></h1>
+          <div className="lede" style={{ marginTop: 10 }}>
+            A discreet, easy-checkout shop with toys <span className="shhh-grad-text" style={{ fontWeight: 700 }}>for everyone</span>.
+            Fully interactive prototype — tap a pin to jump screens, open <kbd>Tweaks</kbd> in the toolbar to remix.
+          </div>
+        </div>
+        <div className="meta" style={{ textAlign: 'right' }}>
+          Variation A · Mono — quiet, monochrome
+        </div>
+      </div>
+
+      <div className="pin-controls">
+        {SCREENS.map(s => (
+          <button key={s.id}
+            className={screenA === s.id ? 'active' : ''}
+            onClick={() => setBoth(s.id)}>
+            {s.label}
+          </button>
+        ))}
+        <button onClick={triggerWelcome} style={{
+          background: 'linear-gradient(120deg, #FF4FB8, #6E4DF8, #2D4BFF)',
+          color: '#fff', borderColor: 'transparent',
+        }}>💘 Match popup</button>
+      </div>
+
+      <div className="frames">
+        <div className="frame-wrap">
+          <ShopApp
+            themeId="velvet"
+            cardStyle={t.cardStyle}
+            heroLayout={t.heroLayout}
+            checkoutFlow={t.checkoutFlow}
+            tone={t.tone}
+            startScreen={screenA}
+            welcomeTrigger={welcomeTrigger}
+          />
+        </div>
+      </div>
+
+      <div className="footer-note">
+        Tap, add to bag, check out, navigate. Use the pins above to jump screens.
+      </div>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Layout" />
+        <TweakRadio label="Hero layout" value={t.heroLayout}
+          options={[
+            { value: 'editorial', label: 'Editorial' },
+            { value: 'stacked', label: 'Stacked' },
+            { value: 'fullbleed', label: 'Full bleed' },
+          ]}
+          onChange={(v) => setTweak('heroLayout', v)} />
+        <TweakRadio label="Product cards" value={t.cardStyle}
+          options={[
+            { value: 'image', label: 'Image-led' },
+            { value: 'minimal', label: 'Minimal' },
+            { value: 'textled', label: 'Text-led' },
+          ]}
+          onChange={(v) => setTweak('cardStyle', v)} />
+        <TweakRadio label="Checkout flow" value={t.checkoutFlow}
+          options={[
+            { value: 'steps', label: '3 steps' },
+            { value: 'single', label: 'One page' },
+          ]}
+          onChange={(v) => setTweak('checkoutFlow', v)} />
+
+        <TweakSection label="Copy" />
+        <TweakRadio label="Discretion tone" value={t.tone}
+          options={[
+            { value: 'playful', label: 'Playful' },
+            { value: 'warm', label: 'Warm' },
+            { value: 'clinical', label: 'Clinical' },
+          ]}
+          onChange={(v) => setTweak('tone', v)} />
+
+        <TweakSection label="Jump to screen" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          {SCREENS.map(s => (
+            <button key={s.id} onClick={() => setBoth(s.id)} style={{
+              all: 'unset', cursor: 'pointer', textAlign: 'center',
+              padding: '8px 10px', borderRadius: 8,
+              background: screenA === s.id ? '#1A1A1A' : '#F2EFEA',
+              color: screenA === s.id ? '#FAFAF7' : '#1A1A1A',
+              fontFamily: 'Manrope, system-ui', fontSize: 12, fontWeight: 600,
+            }}>{s.label}</button>
+          ))}
+        </div>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+window.__shhhDownloadForm = function () {
+  function esc(s){ return String(s).replace(/[()\\]/g, ''); }
+  var W = 595, H = 980;
+  var c = "";
+  c += "0.98 0.97 0.99 rg 0 0 "+W+" "+H+" re f ";
+  c += "1 1 1 rg 32 40 "+(W-64)+" "+(H-80)+" re f ";
+  c += "0.86 0.31 0.72 rg 32 "+(H-80)+" "+(W-64)+" 40 re f ";
+  c += "BT /F2 17 Tf 1 1 1 rg 56 "+(H-68)+" Td (Shhh.lv) Tj ET ";
+  c += "BT /F1 12 Tf 1 1 1 rg 132 "+(H-68)+" Td (atteikuma veidlapa) Tj ET ";
+  c += "BT /F1 9 Tf 0.45 0.45 0.45 rg 56 "+(H-100)+" Td (ES standarta veidlapa  /  Direktiva 2011/83/ES  /  returns@shhh.lv) Tj ET ";
+  function rule(y){ return "0.85 0.85 0.88 RG 0.6 w 56 "+y+" m "+(W-56)+" "+y+" l S "; }
+  function field(label, x, y, lf, lt){ return "BT /F2 10.5 Tf 0.12 0.12 0.14 rg "+x+" "+y+" Td ("+esc(label)+") Tj ET 0.78 0.78 0.82 RG 0.8 w "+lf+" "+(y-2)+" m "+lt+" "+(y-2)+" l S "; }
+  function sec(t,y){ return "BT /F2 8 Tf 0.86 0.31 0.72 rg 56 "+y+" Td ("+esc(t.toUpperCase())+") Tj ET "; }
+  function para(t,y){ return "BT /F1 10 Tf 0.2 0.2 0.22 rg 56 "+y+" Td ("+esc(t)+") Tj ET "; }
+  function hint(t,y){ return "BT /F1 8 Tf 0.55 0.55 0.58 rg 56 "+y+" Td ("+esc(t)+") Tj ET "; }
+  var y = H-128;
+  c += sec("Adresats", y); y-=15;
+  c += para("NL Trading Co SIA  -  Brivibas iela 68-6, Riga, LV-1011, Latvija", y); y-=15;
+  c += para("returns@shhh.lv   -   +371 6700 0000", y); y-=13;
+  c += rule(y); y-=18;
+  c += sec("Pasutijuma identifikacija", y); y-=20;
+  c += field("Pasutijuma Nr.  SH-", 56, y, 168, 360); y-=22;
+  c += field("Slepenais kods", 56, y, 168, 360); y-=16;
+  c += hint("Pasutijuma numuru un kodu atradisi apstiprinajuma e-pasta.", y); y-=11;
+  c += hint("Vards un uzvards nav obligati, ja pasutiji anonimi.", y); y-=13;
+  c += rule(y); y-=18;
+  c += sec("Atgriezamas preces", y); y-=15;
+  c += para("Ar so es atsakos no pirkuma liguma par sadam precem:", y); y-=14;
+  c += "BT /F1 8 Tf 0.5 0.5 0.55 rg 56 "+y+" Td (Nr.) Tj ET ";
+  c += "BT /F1 8 Tf 0.5 0.5 0.55 rg 92 "+y+" Td (Preces nosaukums) Tj ET ";
+  c += "BT /F1 8 Tf 0.5 0.5 0.55 rg 470 "+y+" Td (Daudz.) Tj ET ";
+  y-=6; c += rule(y); y-=20;
+  for (var i=1;i<=5;i++){
+    c += "BT /F2 10 Tf 0.12 0.12 0.14 rg 56 "+y+" Td ("+i+".) Tj ET ";
+    c += "0.78 0.78 0.82 RG 0.8 w 92 "+(y-2)+" m 455 "+(y-2)+" l S ";
+    c += "0.78 0.78 0.82 RG 0.8 w 470 "+(y-2)+" m 540 "+(y-2)+" l S ";
+    y-=24;
+  }
+  y-=2;
+  c += field("Pasutijuma datums", 56, y, 168, 360); y-=22;
+  c += field("Sanemsanas datums", 56, y, 168, 360); y-=14;
+  c += rule(y); y-=18;
+  c += sec("Atmaksa", y); y-=15;
+  c += para("Atmaksu veicam pa to pasu maksajuma kanalu, ko izmantoji pirkumam", y); y-=13;
+  c += para("(karte, banklink, Apple/Google Pay vai davanu karte) 14 dienu laika.", y); y-=14;
+  c += rule(y); y-=18;
+  c += sec("Paraksts (neobligati anonimam pasutijumam)", y); y-=20;
+  c += field("Vards, uzvards", 56, y, 168, 420); y-=22;
+  c += field("Datums", 56, y, 168, 360); y-=22;
+  c += field("Paraksts", 56, y, 168, 420);
+  c += "0.97 0.94 0.98 rg 32 40 "+(W-64)+" 46 re f ";
+  c += "BT /F2 8 Tf 0.4 0.2 0.45 rg 56 66 Td (Shhh.lv  -  NL Trading Co SIA  -  Reg. 40203456789  -  PVN LV40203456789) Tj ET ";
+  c += "BT /F1 8 Tf 0.55 0.4 0.6 rg 56 53 Td (Diskreta piegade   -   Anonimi norekini   -   www.shhh.lv) Tj ET ";
+  var objs = [];
+  objs.push("<< /Type /Catalog /Pages 2 0 R >>");
+  objs.push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>");
+  objs.push("<< /Length "+c.length+" >>\nstream\n"+c+"\nendstream");
+  objs.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  objs.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+  var pdf = "%PDF-1.4\n", offs = [];
+  for (var k=0;k<objs.length;k++){ offs.push(pdf.length); pdf += (k+1)+" 0 obj\n"+objs[k]+"\nendobj\n"; }
+  var xref = pdf.length;
+  pdf += "xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n";
+  for (var o=0;o<offs.length;o++){ var s=String(offs[o]); while(s.length<10)s="0"+s; pdf += s+" 00000 n \n"; }
+  pdf += "trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
+  var blob = new Blob([pdf], { type: 'application/pdf' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'Shhh-atteikuma-veidlapa.pdf';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+(async () => {
+  try { if (window.SHHH_LIVE) await window.SHHH_LIVE.load(); }
+  catch (e) { if (window.SHHH_LIVE) window.SHHH_LIVE.status = 'fallback'; console.warn('[shhh] Supabase unavailable - using built-in demo data.', e); }
+  root.render(<Stage />);
+})();
+</script>
+
+</body>
+</html>
