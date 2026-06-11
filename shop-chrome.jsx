@@ -398,14 +398,14 @@ function MobileFooter({ theme, nav }) {
 
       <div style={{ marginBottom: 22 }}>
         {[
-          { h: 'Ceļveži', items: [
+          { h: t('footer.guides', 'Ceļveži'), items: [
             ['Pirmais vibrators', () => nav('content', { key: 'guide-first-vibrator' })],
             ['Ūdens vs silikona lubrikants', () => nav('content', { key: 'guide-lube' })],
             ['Izmēru un materiālu ceļvedis', () => nav('content', { key: 'size-material' })],
             ['Vārdnīca', () => nav('content', { key: 'glossary' })],
             ['The Journal', () => nav('content', { key: 'journal' })],
           ]},
-          { h: 'Zīmoli', items: [
+          { h: t('footer.brands', 'Zīmoli'), items: [
             ['Visi zīmoli', () => nav('content', { key: 'brands-all' })],
             ['Pulse', () => nav('content', { key: 'brand-pulse' })],
             ['Velura', () => nav('content', { key: 'brand-velura' })],

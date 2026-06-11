@@ -5,6 +5,11 @@ const LANG_STRINGS = {
   // ─── Header / nav ───
   'nav.search': { en: 'Search the catalogue…', lv: 'Meklēt katalogā…', ru: 'Поиск по каталогу…', lt: 'Ieškoti kataloge…', et: 'Otsi kataloogist…' },
   'nav.menu': { en: 'Menu', lv: 'Izvēlne', ru: 'Меню', lt: 'Meniu', et: 'Menüü' },
+  'nav.shop': { en: 'Shop', lv: 'Veikals', ru: 'Магазин', lt: 'Parduotuvė', et: 'Pood' },
+  'nav.brands': { en: 'Brands', lv: 'Zīmoli', ru: 'Бренды', lt: 'Prekės ženklai', et: 'Brändid' },
+  'nav.match': { en: 'Match', lv: 'Savietot', ru: 'Подбор', lt: 'Atitikimas', et: 'Sobita' },
+  'search.title': { en: 'Search', lv: 'Meklēšana', ru: 'Поиск', lt: 'Paieška', et: 'Otsing' },
+  'home.shopAll': { en: 'Shop all', lv: 'Skatīt visu', ru: 'Смотреть всё', lt: 'Žiūrėti viską', et: 'Vaata kõiki' },
 
   // ─── Bottom tab bar ───
   'tab.shop': { en: 'Shop', lv: 'Veikals', ru: 'Магазин', lt: 'Parduotuvė', et: 'Pood' },
@@ -76,6 +81,8 @@ const LANG_STRINGS = {
   // ─── Footer common ───
   'footer.about': { en: 'A discreet adult shop. Plain box, anonymous billing, body-safe materials. Shipping across the Baltics in 24 hours.', lv: 'Diskrēts pieaugušo veikals. Vienkārša kaste, anonīma maksāšana, ķermeņdrošas materiāli. Piegāde Baltijā 24 stundu laikā.', ru: 'Сдержанный магазин для взрослых. Простая коробка, анонимная оплата, безопасные материалы. Доставка по Балтии за 24 часа.', lt: 'Diskretiška suaugusiųjų parduotuvė. Paprasta dėžė, anoniminis apmokėjimas, kūnui saugios medžiagos. Pristatymas Baltijos šalyse per 24 val.', et: 'Diskreetne täiskasvanute pood. Tühi karp, anonüümne arveldus, kehale ohutud materjalid. Tarne üle Baltikumi 24 tunni jooksul.' },
   'footer.shop': { en: 'Shop', lv: 'Veikals', ru: 'Магазин', lt: 'Parduotuvė', et: 'Pood' },
+  'footer.guides': { en: 'Guides', lv: 'Ceļveži', ru: 'Гиды', lt: 'Gidai', et: 'Juhendid' },
+  'footer.brands': { en: 'Brands', lv: 'Zīmoli', ru: 'Бренды', lt: 'Prekės ženklai', et: 'Brändid' },
   'footer.trust': { en: 'Trust', lv: 'Uzticība', ru: 'Доверие', lt: 'Pasitikėjimas', et: 'Usaldus' },
   'footer.support': { en: 'Support', lv: 'Atbalsts', ru: 'Поддержка', lt: 'Pagalba', et: 'Tugi' },
   'footer.legal': { en: 'Legal', lv: 'Juridiski', ru: 'Юридическое', lt: 'Teisinis', et: 'Õiguslik' },
