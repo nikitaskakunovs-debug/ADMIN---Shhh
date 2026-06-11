@@ -80,6 +80,7 @@
   const root = ReactDOM.createRoot(document.getElementById('root'));
   (async () => {
     try {
+      await window.SHHH_LIVE.restoreSession();
       await window.SHHH_LIVE.load();
     } catch (e) {
       window.SHHH_LIVE.status = 'fallback';

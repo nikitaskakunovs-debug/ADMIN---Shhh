@@ -843,9 +843,21 @@ function menuItem(active) {
 
 // ── Login screen (sign-in / sign-out flow) ───────────────────
 function ALogin({ onSignIn, role = 'owner', setRole }) {
-  const [email, setEmail] = React.useState('admin@shhh.lv');
-  const [pw, setPw] = React.useState('password');
-  const submit = (e) => { if (e) e.preventDefault(); onSignIn(); };
+  const [email, setEmail] = React.useState('');
+  const [pw, setPw] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState('');
+  const live = window.SHHH_LIVE;
+  const submit = async (e) => {
+    if (e) e.preventDefault();
+    if (busy) return;
+    // Without a Supabase connection (local file preview) keep the old demo behaviour.
+    if (!live || live.status === 'fallback') { onSignIn(); return; }
+    setBusy(true); setErr('');
+    try { await live.signIn(email.trim(), pw); onSignIn(); }
+    catch (ex) { setErr(ex.message === 'Invalid login credentials' ? 'Wrong email or password.' : (ex.message || 'Sign-in failed.')); }
+    finally { setBusy(false); }
+  };
   return (
     <div style={{ minHeight: '100vh', background: AT.side, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: AT.body }}>
       <form onSubmit={submit} style={{ width: 384, maxWidth: '100%', background: AT.panel, borderRadius: 16, padding: '34px 30px', boxShadow: '0 30px 80px rgba(0,0,0,0.45)' }}>
@@ -863,8 +875,9 @@ function ALogin({ onSignIn, role = 'owner', setRole }) {
             </select>
           </AField>
         </div>
-        <button type="submit" style={{ all: 'unset', cursor: 'pointer', boxSizing: 'border-box', marginTop: 22, width: '100%', textAlign: 'center', height: 46, lineHeight: '46px', borderRadius: 10, background: AT.accent, color: '#fff', fontFamily: AT.body, fontWeight: 700, fontSize: 14.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <AIcon name="login" size={17} color="#fff" /> Sign in
+        {err && <div style={{ marginTop: 14, padding: '9px 12px', borderRadius: 8, background: '#F3E0E0', color: '#9A2A2A', fontFamily: AT.body, fontSize: 12.5, fontWeight: 600 }}>{err}</div>}
+        <button type="submit" disabled={busy} style={{ all: 'unset', cursor: busy ? 'wait' : 'pointer', boxSizing: 'border-box', marginTop: err ? 14 : 22, width: '100%', textAlign: 'center', height: 46, lineHeight: '46px', borderRadius: 10, background: AT.accent, opacity: busy ? 0.7 : 1, color: '#fff', fontFamily: AT.body, fontWeight: 700, fontSize: 14.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <AIcon name="login" size={17} color="#fff" /> {busy ? 'Signing in…' : 'Sign in'}
         </button>
         <div style={{ fontFamily: AT.body, fontSize: 12, color: AT.inkSoft, textAlign: 'center', marginTop: 16 }}>Protected area · billed as NL Trading Co</div>
       </form>

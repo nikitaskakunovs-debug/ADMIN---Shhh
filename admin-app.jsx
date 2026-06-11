@@ -31,8 +31,15 @@ function AdminApp() {
   const [crm, setCrm] = React.useState(initial.crm);
   const [audit, setAudit] = React.useState(initial.audit);
   const [cms, setCmsState] = React.useState(initial.cms);
-  const [signedIn, setSignedIn] = React.useState(() => { try { return JSON.parse(localStorage.getItem('shhh_admin_auth') || 'true'); } catch (e) { return true; } });
+  // Signed in = a real Supabase session (restored before render by the boot
+  // script). The old localStorage flag only applies when the site runs
+  // without a Supabase connection (e.g. opened as a local file).
+  const [signedIn, setSignedIn] = React.useState(() => {
+    if (window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') return !!window.SHHH_LIVE.user;
+    try { return JSON.parse(localStorage.getItem('shhh_admin_auth') || 'true'); } catch (e) { return true; }
+  });
   React.useEffect(() => { try { localStorage.setItem('shhh_admin_auth', JSON.stringify(signedIn)); } catch (e) {} }, [signedIn]);
+  const signOut = () => { setSignedIn(false); if (window.SHHH_LIVE) window.SHHH_LIVE.signOut(); };
   // Multi-business / multi-market scope (persisted). market 'all' = consolidated.
   const [scope, setScope] = React.useState(() => {
     try { const s = JSON.parse(localStorage.getItem('shhh_admin_scope') || 'null'); if (s && s.business) return s; } catch (e) {}
@@ -225,13 +232,23 @@ function AdminApp() {
     return [copy, ...prev];
   });
   const removeOrders = (refs) => { checkpoint('Deleted ' + (refs.length > 1 ? refs.length + ' orders' : 'order #' + refs[0])); setOrders(prev => prev.filter(o => !refs.includes(o.ref))); log('order', 'Deleted', refs.length > 1 ? refs.length + ' orders' : refs[0], ''); };
-  const setStockVal = (id, n) => { checkpoint('Stock adjusted'); const prevN = stock[id] ?? 0; setStock(prev => ({ ...prev, [id]: Math.max(0, n) })); const p = (window.PRODUCTS || []).find(x => x.id === id); log('inventory', 'Stock adjust', (p && p.name) || id, `${prevN} → ${Math.max(0, n)}`); };
+  // Push a product change to the database (signed-in sessions only); the
+  // local copy always updates, and a toast warns if the DB write fails.
+  const dbSave = (id, patch, what) => {
+    if (!window.SHHH_LIVE || !window.SHHH_LIVE.session) return;
+    window.SHHH_LIVE.saveProduct(id, patch).catch(e => {
+      console.warn('[shhh] DB save failed for ' + id, e);
+      toast('⚠ ' + (what || 'Change') + ' saved locally, but the database update failed.');
+    });
+  };
+  const setStockVal = (id, n) => { checkpoint('Stock adjusted'); const prevN = stock[id] ?? 0; setStock(prev => ({ ...prev, [id]: Math.max(0, n) })); const p = (window.PRODUCTS || []).find(x => x.id === id); log('inventory', 'Stock adjust', (p && p.name) || id, `${prevN} → ${Math.max(0, n)}`); dbSave(id, { stock: Math.max(0, n) }, 'Stock'); };
   const setProduct = (id, patch) => {
     checkpoint('Product edited');
     setPrices(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }));
     const p = (window.PRODUCTS || []).find(x => x.id === id);
     const det = patch.price != null ? ('price → €' + patch.price) : patch.hidden != null ? (patch.hidden ? 'hidden' : 'visible') : 'updated';
     log('catalog', 'Product edit', (p && p.name) || id, det);
+    dbSave(id, patch, 'Product edit');
   };
   // Reviews & returns are mutated directly by their screens — wrap so each change is undoable.
   const setReviewsU = (next) => { checkpoint('Review moderation'); setReviews(next); };
@@ -397,7 +414,7 @@ function AdminApp() {
 
   return (
     <AdminShell role={role} setRole={setRole} current={screen} nav={nav}
-      pageTitle={meta.title} pageSub={meta.sub} badges={badges} onSignOut={() => setSignedIn(false)}
+      pageTitle={meta.title} pageSub={meta.sub} badges={badges} onSignOut={signOut}
       scope={scope} setScope={setScope} tabBar={tabBar} fullBleed={split} meName={emailSettings.fromName} env={env}
       undo={undo} redo={redo} canUndo={undoStack.length > 0} canRedo={redoStack.length > 0}
       undoLabel={undoStack.length ? undoStack[undoStack.length - 1].label : ''}
