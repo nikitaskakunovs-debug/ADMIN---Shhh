@@ -501,6 +501,32 @@ function ProductCard({ product, theme, variant = 'image', onClick, isFavourite, 
 // ─────────────────────────────────────────────────────────────
 function BottomBar({ theme, current, onNav, cartCount = 0, frameless = false }) {
   const t = typeof useT === 'function' ? useT() : (k, fb) => fb || k;
+  // Glue the bar to the VISIBLE viewport bottom: when the iOS toolbar
+  // collapses/expands (or the keyboard opens) the visual viewport shifts
+  // relative to the layout viewport that position:fixed anchors to — this
+  // lift closes that gap so the bar rides the toolbar like padthaibistro.ru.
+  const [lift, setLift] = React.useState(0);
+  React.useEffect(() => {
+    if (!frameless || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    let raf = 0;
+    const upd = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        setLift(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+      });
+    };
+    vv.addEventListener('resize', upd);
+    vv.addEventListener('scroll', upd);
+    window.addEventListener('scroll', upd, { passive: true });
+    upd();
+    return () => {
+      cancelAnimationFrame(raf);
+      vv.removeEventListener('resize', upd);
+      vv.removeEventListener('scroll', upd);
+      window.removeEventListener('scroll', upd);
+    };
+  }, [frameless]);
   const Item = ({ id, icon, label }) => {
     const active = current === id;
     return (
@@ -530,7 +556,8 @@ function BottomBar({ theme, current, onNav, cartCount = 0, frameless = false }) 
   };
   return (
     <div style={{
-      position: frameless ? 'fixed' : 'absolute', bottom: 0, left: 0, right: 0,
+      position: frameless ? 'fixed' : 'absolute', bottom: frameless ? lift : 0, left: 0, right: 0,
+      transition: frameless ? 'bottom 0.18s ease-out' : undefined,
       paddingBottom: frameless ? 'calc(8px + env(safe-area-inset-bottom, 0px))' : 26, paddingTop: 4,
       background: theme.bg + 'EE',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',

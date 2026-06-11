@@ -167,9 +167,11 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   const body = (
     <div style={frameless ? {
       // Real phone: grow with content so the DOCUMENT scrolls (this is what
-      // lets iOS Safari collapse its toolbar). Clip horizontal drift.
+      // lets iOS Safari collapse its toolbar). 'clip' blocks sideways drift
+      // WITHOUT creating a scroll container, so the sticky header keeps
+      // working (overflow:hidden would silently disable position:sticky).
       minHeight: '100dvh', background: theme.bg, color: theme.ink,
-      fontFamily: theme.body, position: 'relative', overflowX: 'hidden',
+      fontFamily: theme.body, position: 'relative', overflowX: 'clip',
     } : {
       width: '100%', height: '100%',
       background: theme.bg, color: theme.ink,
