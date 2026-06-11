@@ -145,6 +145,8 @@ window.SHHH_LIVE = {
       createdAt: (p.created_at || '').slice(0, 10),
     }));
     window.BRANDS = brands;
+    // The catalog screens read window.CATEGORIES ({id, label}).
+    window.CATEGORIES = categories.map(c => ({ id: c.id, label: c.name }));
 
     // Keep the storefront object in sync for anything that reads it.
     if (window.SHOP_DATA) {
@@ -277,6 +279,18 @@ window.SHHH_LIVE = {
       await this._rest('order_items', 'POST', items, 'return=minimal');
     }
     return created.id;
+  },
+
+  // Insert a new catalog product. Returns the created DB row.
+  async insertProduct(p) {
+    if (!this.session) throw new Error('Not signed in.');
+    const res = await this._rest('products', 'POST', {
+      legacy_id: p.id, sku: p.code, name: p.name,
+      brand_id: p.brandId || null, category_id: p.category || null,
+      price: Number(p.price) || 0, stock: Math.max(0, Number(p.stock) || 0),
+      status: 'active', sizes: p.sizes || [],
+    }, 'return=representation');
+    return (await res.json())[0];
   },
 
   // Insert a new brand. Returns the created row (mapped for window.BRANDS).

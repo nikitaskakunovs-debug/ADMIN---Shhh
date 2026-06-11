@@ -30,15 +30,29 @@ function ACatalog({ ctx, params, nav }) {
   const [draft, setDraft] = React.useState(null);
   const [newDraft, setNewDraft] = React.useState(null); // create-product form
   const [, bumpCatalog] = React.useState(0);
-  const createProduct = () => {
+  const createProduct = async () => {
     const n = newDraft;
+    if (n.busy) return;
     if (!n.name.trim()) { toast('Product name is required'); return; }
-    const id = 'p' + Date.now().toString(36);
-    const product = { id, name: n.name.trim(), brand: (n.brand || '').trim(), category: n.category, code: (n.code || '').trim() || String(Math.floor(Math.random() * 9e10 + 1e10)), price: +n.price || 0, swatches: ['#1A1A19'] };
+    const id = n.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) + '-' + Date.now().toString(36).slice(-4);
+    const brandObj = (ctx.brands || window.BRANDS || []).find(b => b.id === n.brand);
+    const product = {
+      id, name: n.name.trim(), brand: brandObj ? brandObj.name : '', brandId: brandObj ? brandObj.id : null,
+      category: n.category, code: (n.code || '').trim() || ('SH-NEW-' + Date.now().toString(36).toUpperCase()),
+      price: +n.price || 0, stock: Math.max(0, +n.stock || 0), status: 'active', sizes: [], swatches: ['#1A1A19'],
+    };
+    const live = window.SHHH_LIVE;
+    if (live && live.status !== 'fallback') {
+      if (!live.session) { toast('⚠ Sign in to add products.'); return; }
+      setNewDraft({ ...n, busy: true });
+      try { await live.insertProduct(product); }
+      catch (e) { console.warn('[shhh] product insert failed', e); toast('⚠ Could not save the product: ' + ((e && e.message) || 'unknown error')); setNewDraft({ ...n, busy: false }); return; }
+    } else {
+      // No database connection (local preview): keep the old browser-only path.
+      try { const cp = JSON.parse(localStorage.getItem('shhh_admin_customproducts') || '[]'); cp.push(product); localStorage.setItem('shhh_admin_customproducts', JSON.stringify(cp)); } catch (e) {}
+    }
     if (window.PRODUCTS) window.PRODUCTS.push(product);
-    try { const cp = JSON.parse(localStorage.getItem('shhh_admin_customproducts') || '[]'); cp.push(product); localStorage.setItem('shhh_admin_customproducts', JSON.stringify(cp)); } catch (e) {}
-    ctx.setProduct(id, { price: +n.price || 0 });
-    ctx.setStockVal(id, +n.stock || 0);
+    ctx.setStockVal(id, product.stock);
     if (ctx.log) ctx.log('catalog', 'Created product', product.name, product.brand);
     toast(product.name + ' created');
     setNewDraft(null); bumpCatalog(v => v + 1);
@@ -222,12 +236,12 @@ function ACatalog({ ctx, params, nav }) {
 
       {/* Create product */}
       <ADrawer open={!!newDraft} onClose={() => setNewDraft(null)} width={460} title="Add a product" sub="Create a new catalogue item"
-        footer={newDraft && (<><ABtn kind="ghost" onClick={() => setNewDraft(null)}>Cancel</ABtn><ABtn kind="primary" onClick={createProduct}><AIcon name="plus" size={15} /> Create product</ABtn></>)}>
+        footer={newDraft && (<><ABtn kind="ghost" onClick={() => setNewDraft(null)}>Cancel</ABtn><ABtn kind="primary" onClick={createProduct} disabled={!!newDraft.busy}><AIcon name="plus" size={15} /> {newDraft.busy ? 'Creating…' : 'Create product'}</ABtn></>)}>
         {newDraft && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <AField label="Product name"><AInput value={newDraft.name} onChange={e => setNewDraft({ ...newDraft, name: e.target.value })} placeholder="e.g. Lelo Sona 2" /></AField>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <AField label="Brand"><AInput value={newDraft.brand} onChange={e => setNewDraft({ ...newDraft, brand: e.target.value })} placeholder="e.g. LELO" /></AField>
+              <AField label="Brand"><select value={newDraft.brand} onChange={e => setNewDraft({ ...newDraft, brand: e.target.value })} style={{ ...aInputStyle, cursor: 'pointer' }}><option value="">— No brand —</option>{(ctx.brands || window.BRANDS || []).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></AField>
               <AField label="Category"><select value={newDraft.category} onChange={e => setNewDraft({ ...newDraft, category: e.target.value })} style={{ ...aInputStyle, cursor: 'pointer' }}>{(window.CATEGORIES || []).filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></AField>
               <AField label="Price incl. VAT (€)"><AInput type="number" value={newDraft.price} onChange={e => setNewDraft({ ...newDraft, price: e.target.value })} placeholder="0.00" /></AField>
               <AField label="Initial stock"><AInput type="number" value={newDraft.stock} onChange={e => setNewDraft({ ...newDraft, stock: e.target.value })} /></AField>
