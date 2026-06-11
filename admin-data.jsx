@@ -419,7 +419,11 @@ const SEED_PAYOUTS = [
 function adminLoad() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(ADMIN_STORE_KEY) || '{}'); } catch (e) {}
-  const orders = (saved.orders && saved.orders.length) ? saved.orders : SEED_ORDERS.map(_mkOrder);
+  // Prefer live orders from Supabase (set by the boot loader); fall back to
+  // any locally-saved orders, then to the built-in demo seed.
+  const orders = (window.LIVE_ORDERS && window.LIVE_ORDERS.length) ? window.LIVE_ORDERS
+                 : (saved.orders && saved.orders.length) ? saved.orders
+                 : SEED_ORDERS.map(_mkOrder);
   const stock = saved.stock || (window.PRODUCTS || []).reduce((m, p) => { m[p.id] = typeof p.stock === 'number' ? p.stock : 8; return m; }, {});
   const prices = saved.prices || {};
   const reviews = saved.reviews || SEED_REVIEWS_QUEUE;

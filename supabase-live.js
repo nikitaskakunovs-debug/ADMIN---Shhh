@@ -106,8 +106,10 @@ window.SHHH_LIVE = {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 6000);
     try {
+      // Session-aware: uses the signed-in token when present (so reads of
+      // RLS-protected tables like orders work), else the public anon key.
       const res = await fetch(this.url + '/rest/v1/' + path, {
-        headers: { apikey: this.key, Authorization: 'Bearer ' + this.key },
+        headers: this._headers(false),
         signal: ctrl.signal,
       });
       if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + path);
@@ -150,9 +152,122 @@ window.SHHH_LIVE = {
       window.SHOP_DATA.categories = categories.map(c => ({ id: c.id, name: c.name }));
     }
 
+    // Orders are loaded too, into window.LIVE_ORDERS (adminLoad prefers it).
+    try { window.LIVE_ORDERS = await this.loadOrders(); }
+    catch (e) { console.warn('[shhh] order load failed; using demo orders.', e); }
+
     this.status = 'live';
     console.info('[shhh] Live catalog loaded from Supabase: ' +
-      products.length + ' products, ' + brands.length + ' brands, ' + categories.length + ' categories.');
+      products.length + ' products, ' + brands.length + ' brands, ' + categories.length + ' categories' +
+      (window.LIVE_ORDERS ? ', ' + window.LIVE_ORDERS.length + ' orders' : '') + '.');
     return { products: products.length, brands: brands.length, categories: categories.length };
+  },
+
+  // ── Orders: load and map DB rows → the UI order shape (_mkOrder-compatible) ──
+  async loadOrders() {
+    const rows = await this.fetch(
+      'orders?select=id,ref,status,pay_method,pay_failed,pay_fail_reason,courier,locker,sender,tracking,company,vat_no,subtotal,shipping,discount,total,created_at,business_id,market_id,alias,email,' +
+      'order_items(qty,unit_price,name,product:products(legacy_id)),' +
+      'refunds(amount,reason,created_at)' +
+      '&order=created_at.desc');
+    return rows.map(o => ({
+      _id: o.id,                       // DB uuid (used by write-back; not shown in UI)
+      ref: o.ref,
+      date: (o.created_at || '').replace('T', ' ').slice(0, 16),
+      status: o.status,
+      payMethod: o.pay_method,
+      payFailed: !!o.pay_failed,
+      payFailReason: o.pay_fail_reason || undefined,
+      courier: o.courier, locker: o.locker, sender: o.sender, tracking: o.tracking || undefined,
+      company: o.company || undefined, vatNo: o.vat_no || undefined,
+      business: o.business_id || 'shhh',
+      market: o.market_id || 'LV', country: o.market_id || 'LV',
+      alias: o.alias, email: o.email,
+      items: (o.order_items || []).map(i => ({
+        id: i.product ? i.product.legacy_id : null,
+        name: i.name, price: Number(i.unit_price), qty: i.qty,
+      })),
+      subtotal: Number(o.subtotal) || 0,
+      shipping: Number(o.shipping) || 0,
+      discount: Number(o.discount) || 0,
+      total: Number(o.total) || 0,
+      refunds: (o.refunds || []).map(r => ({
+        amount: Number(r.amount), reason: r.reason, reasonLabel: r.reason,
+        note: '', ts: (r.created_at || '').replace('T', ' ').slice(0, 16), actor: '',
+      })),
+    }));
+  },
+
+  // Map UI order patch keys → DB columns (only the ones an operator edits).
+  _orderCols(patch) {
+    const m = { status: 'status', tracking: 'tracking', courier: 'courier',
+      locker: 'locker', sender: 'sender', payMethod: 'pay_method',
+      company: 'company', vatNo: 'vat_no' };
+    const cols = {};
+    Object.keys(patch).forEach(k => { if (m[k] !== undefined) cols[m[k]] = patch[k]; });
+    return cols;
+  },
+
+  async _rest(path, method, body, prefer) {
+    const res = await fetch(this.url + '/rest/v1/' + path, {
+      method,
+      headers: Object.assign(this._headers(!!body), prefer ? { Prefer: prefer } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(method + ' ' + path.split('?')[0] + ' failed (HTTP ' + res.status + '): ' + t.slice(0, 140));
+    }
+    return res;
+  },
+
+  // Update an order by ref. No-op if not signed in or nothing maps to a column.
+  async updateOrder(ref, patch) {
+    if (!this.session) throw new Error('Not signed in.');
+    const cols = this._orderCols(patch);
+    if (!Object.keys(cols).length) return;
+    await this._rest('orders?ref=eq.' + encodeURIComponent(ref), 'PATCH', cols, 'return=minimal');
+  },
+
+  // Record a refund; also flips the order to 'refunded' when fully covered.
+  async addRefund(orderUuid, ref, amount, reason, fully) {
+    if (!this.session) throw new Error('Not signed in.');
+    await this._rest('refunds', 'POST',
+      { order_id: orderUuid, amount: Math.round((Number(amount) || 0) * 100) / 100, reason: reason || null },
+      'return=minimal');
+    if (fully) await this._rest('orders?ref=eq.' + encodeURIComponent(ref), 'PATCH', { status: 'refunded' }, 'return=minimal');
+  },
+
+  async deleteOrders(refs) {
+    if (!this.session) throw new Error('Not signed in.');
+    if (!refs || !refs.length) return;
+    const list = refs.map(r => encodeURIComponent(r)).join(',');
+    // order_items / refunds are removed by ON DELETE CASCADE.
+    await this._rest('orders?ref=in.(' + list + ')', 'DELETE', null, 'return=minimal');
+  },
+
+  // Insert a duplicated order (header + line items) and return its new uuid.
+  async insertOrder(order) {
+    if (!this.session) throw new Error('Not signed in.');
+    const res = await this._rest('orders', 'POST', {
+      ref: order.ref, business_id: order.business || 'shhh', market_id: order.market || order.country || 'LV',
+      alias: order.alias, email: order.email, status: order.status || 'pending',
+      pay_method: order.payMethod, courier: order.courier, locker: order.locker, sender: order.sender,
+      company: order.company || null, vat_no: order.vatNo || null,
+      subtotal: order.subtotal || 0, shipping: order.shipping || 0, discount: order.discount || 0, total: order.total || 0,
+    }, 'return=representation');
+    const created = (await res.json())[0];
+    const items = (order.items || []).filter(i => i.id).map(i => ({
+      order_id: created.id, product_id: null, name: i.name, unit_price: i.price, qty: i.qty,
+    }));
+    // Resolve product uuids by legacy_id, then insert line items.
+    if (items.length) {
+      const ids = order.items.map(i => i.id).filter(Boolean);
+      const prods = await this.fetch('products?select=id,legacy_id&legacy_id=in.(' + ids.map(encodeURIComponent).join(',') + ')');
+      const byLegacy = {}; prods.forEach(p => { byLegacy[p.legacy_id] = p.id; });
+      order.items.forEach((i, n) => { if (items[n]) items[n].product_id = byLegacy[i.id] || null; });
+      await this._rest('order_items', 'POST', items, 'return=minimal');
+    }
+    return created.id;
   },
 };

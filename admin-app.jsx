@@ -40,6 +40,18 @@ function AdminApp() {
   });
   React.useEffect(() => { try { localStorage.setItem('shhh_admin_auth', JSON.stringify(signedIn)); } catch (e) {} }, [signedIn]);
   const signOut = () => { setSignedIn(false); if (window.SHHH_LIVE) window.SHHH_LIVE.signOut(); };
+  // Orders are locked to anonymous users, so the boot loader can't read them.
+  // Once signed in, re-fetch them with the authenticated token.
+  React.useEffect(() => {
+    if (!signedIn) return;
+    const live = window.SHHH_LIVE;
+    if (!live || !live.session) return;
+    let cancelled = false;
+    live.loadOrders()
+      .then(rows => { if (!cancelled && rows && rows.length) { window.LIVE_ORDERS = rows; setOrders(rows); } })
+      .catch(e => console.warn('[shhh] post-login order refresh failed', e));
+    return () => { cancelled = true; };
+  }, [signedIn]);
   // Multi-business / multi-market scope (persisted). market 'all' = consolidated.
   const [scope, setScope] = React.useState(() => {
     try { const s = JSON.parse(localStorage.getItem('shhh_admin_scope') || 'null'); if (s && s.business) return s; } catch (e) {}
@@ -198,10 +210,19 @@ function AdminApp() {
     setAudit(prev => [{ id: 'a' + Date.now() + Math.floor(Math.random() * 1000), ts: nowStamp(), actor, type, action, target: target || '', detail: detail || '' }, ...prev]);
   }, [role]);
 
+  // Fire-and-forget order write to the DB; warns (but never blocks) on failure.
+  const dbOrder = (promise, what) => {
+    if (!window.SHHH_LIVE || !window.SHHH_LIVE.session) return;
+    Promise.resolve(promise).catch(e => {
+      console.warn('[shhh] order DB write failed', e);
+      toast('⚠ ' + (what || 'Order change') + ' saved locally, but the database update failed.');
+    });
+  };
   const updateOrder = (ref, patch) => {
     checkpoint(patch.status ? ('Order #' + ref + ' → ' + ((ORDER_STATUS[patch.status] || {}).en || patch.status)) : 'Order #' + ref + ' edited');
     setOrders(prev => prev.map(o => o.ref === ref ? { ...o, ...patch } : o));
     if (patch.status) { const m = (ORDER_STATUS[patch.status] || {}); log('order', m.en || patch.status, ref, ''); }
+    dbOrder(window.SHHH_LIVE && window.SHHH_LIVE.updateOrder(ref, patch), 'Order update');
   };
   // Issue a (full or partial) refund with a reason + note. Marks the order
   // 'refunded' once the cumulative refund covers the total; otherwise records a
@@ -221,17 +242,23 @@ function AdminApp() {
     setOrders(prev => prev.map(x => x.ref === ref ? { ...x, refunds: [...(x.refunds || []), entry], status: fully ? 'refunded' : x.status } : x));
     log('order', fully ? 'Refunded' : 'Partial refund', ref, '€' + amount.toFixed(2) + ' · ' + (info.reasonLabel || info.reason) + (info.note ? ' — ' + info.note : ''));
     toast((fully ? 'Refunded ' : 'Partially refunded ') + '€' + amount.toFixed(2) + ' on #' + ref);
+    const reasonText = (info.reasonLabel || info.reason || '') + (info.note ? ' — ' + info.note : '');
+    dbOrder(window.SHHH_LIVE && window.SHHH_LIVE.addRefund(o._id, ref, amount, reasonText, fully), 'Refund');
   };
-  const duplicateOrder = (ref, _skipCheckpoint) => setOrders(prev => {
+  const duplicateOrder = (ref, _skipCheckpoint) => {
     if (!_skipCheckpoint) checkpoint('Duplicated order #' + ref);
-    const src = prev.find(o => o.ref === ref);
-    if (!src) return prev;
+    const src = orders.find(o => o.ref === ref);
+    if (!src) return;
     const newRef = 'SH-' + Math.floor(Math.random() * 90000 + 10000);
     const copy = { ...src, ref: newRef, date: nowStamp(), status: 'pending', tracking: undefined };
+    delete copy._id; // a fresh row; its uuid is assigned on insert
+    setOrders(prev => [copy, ...prev]);
     log('order', 'Duplicated', ref, '→ ' + newRef);
-    return [copy, ...prev];
-  });
-  const removeOrders = (refs) => { checkpoint('Deleted ' + (refs.length > 1 ? refs.length + ' orders' : 'order #' + refs[0])); setOrders(prev => prev.filter(o => !refs.includes(o.ref))); log('order', 'Deleted', refs.length > 1 ? refs.length + ' orders' : refs[0], ''); };
+    dbOrder(window.SHHH_LIVE && window.SHHH_LIVE.insertOrder(copy).then(id => {
+      setOrders(prev => prev.map(o => o.ref === newRef ? { ...o, _id: id } : o));
+    }), 'Duplicate order');
+  };
+  const removeOrders = (refs) => { checkpoint('Deleted ' + (refs.length > 1 ? refs.length + ' orders' : 'order #' + refs[0])); setOrders(prev => prev.filter(o => !refs.includes(o.ref))); log('order', 'Deleted', refs.length > 1 ? refs.length + ' orders' : refs[0], ''); dbOrder(window.SHHH_LIVE && window.SHHH_LIVE.deleteOrders(refs), 'Delete order'); };
   // Push a product change to the database (signed-in sessions only); the
   // local copy always updates, and a toast warns if the DB write fails.
   const dbSave = (id, patch, what) => {
