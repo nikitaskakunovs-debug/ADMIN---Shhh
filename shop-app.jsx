@@ -44,6 +44,16 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   const nav = (s, p) => {
     setMenuOpen(false);
     setScreen(s); setParams(p || {});
+    // Real mobile site: each new screen starts at the very top with the iOS
+    // toolbar expanded — exactly like a fresh page load. Without this the SPA
+    // keeps the previous scroll offset, leaving the sticky header and the
+    // toolbar-tracking nav bar out of sync after the first navigation.
+    if (frameless && typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        if (window.visualViewport) window.dispatchEvent(new Event('scroll'));
+      });
+    }
     if (typeof updateSEO === 'function') {
       try { updateSEO(s, p || {}, 'lv'); } catch (e) {}
     }
