@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google Tag Manager — replace GTM-XXXXXXX with the real container ID -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-XXXXXXX');
+</script>
+<!-- End Google Tag Manager -->
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shhh… — discreet adult shop</title>
@@ -57,6 +68,13 @@
 </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+  <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+
 
 <div id="root"></div>
 
@@ -65,25 +83,26 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
 <!-- Live catalog: prices, stock and photos come from Supabase (falls back to built-in demo data) -->
-<script src="supabase-live.js?v=1781202034"></script>
-<script type="text/babel" src="shop-errorboundary.jsx?v=1781202034"></script>
+<script src="supabase-live.js?v=1781253959"></script>
+<script src="shop-tracking.js?v=1781253959"></script>
+<script type="text/babel" src="shop-errorboundary.jsx?v=1781253959"></script>
 
 <!-- Shared data + logic reused AS-IS from the mobile prototype (v15) -->
-<script type="text/babel" src="shop-data.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-i18n.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-seo.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-ui.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-ui-2.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-chrome.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-consent.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-checkout-bits.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-promo.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-content.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-brands.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-invoice.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-returns.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-cancel.jsx?v=1781202034"></script>
-<script type="text/babel" src="shop-usage.jsx?v=1781202034"></script>
+<script type="text/babel" src="shop-data.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-i18n.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-seo.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-ui.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-ui-2.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-chrome.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-consent.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-checkout-bits.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-promo.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-content.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-brands.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-invoice.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-returns.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-cancel.jsx?v=1781253959"></script>
+<script type="text/babel" src="shop-usage.jsx?v=1781253959"></script>
 
 <!-- Inline applyFilters / DEFAULT_FILTERS / SORT_OPTIONS (desktop filter set) -->
 <script type="text/babel">
@@ -125,12 +144,12 @@ function applyFilters(products, filters, sort) {
 Object.assign(window, { DEFAULT_FILTERS, SORT_OPTIONS, applyFilters });
 </script>
 
-<script type="text/babel" src="desktop-ui.jsx?v=1781202034"></script>
-<script type="text/babel" src="desktop-screens-1.jsx?v=1781202034"></script>
-<script type="text/babel" src="desktop-screens-2.jsx?v=1781202034"></script>
-<script type="text/babel" src="desktop-screens-3.jsx?v=1781202034"></script>
-<script type="text/babel" src="desktop-screens-4.jsx?v=1781202034"></script>
-<script type="text/babel" src="desktop-app.jsx?v=1781202034"></script>
+<script type="text/babel" src="desktop-ui.jsx?v=1781253959"></script>
+<script type="text/babel" src="desktop-screens-1.jsx?v=1781253959"></script>
+<script type="text/babel" src="desktop-screens-2.jsx?v=1781253959"></script>
+<script type="text/babel" src="desktop-screens-3.jsx?v=1781253959"></script>
+<script type="text/babel" src="desktop-screens-4.jsx?v=1781253959"></script>
+<script type="text/babel" src="desktop-app.jsx?v=1781253959"></script>
 
 <script type="text/babel" data-presets="env,react">
 const root = ReactDOM.createRoot(document.getElementById('root'));

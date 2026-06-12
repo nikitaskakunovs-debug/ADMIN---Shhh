@@ -333,6 +333,28 @@ function DCheckout({ nav, cart, subtotal, onComplete, forceMode, appliedPromo, s
       location: location || '',
     };
   }, [name, email, phone, courier, location]);
+
+  // ── Marketing tracking (no PII): funnel events + totals snapshot ──
+  // (effects run post-render, so discount/shipping/total below are initialized)
+  const dckStarted = React.useRef(false);
+  React.useEffect(() => {
+    if (dckStarted.current || !window.SHHH_TRACK) return;
+    dckStarted.current = true;
+    window.SHHH_TRACK.checkoutStarted(cart, { subtotal, shipping, discount, total });
+  }, []);
+  React.useEffect(() => {
+    window.__shhhCheckoutTotals = { subtotal, shipping, discount, total };
+  }, [subtotal, shipping, discount, total]);
+  const dckCourier = React.useRef(true);
+  React.useEffect(() => {
+    if (dckCourier.current) { dckCourier.current = false; return; }
+    if (window.SHHH_TRACK) window.SHHH_TRACK.deliverySelected(courierObj, shipping);
+  }, [courier]);
+  const dckPay = React.useRef(true);
+  React.useEffect(() => {
+    if (dckPay.current) { dckPay.current = false; return; }
+    if (window.SHHH_TRACK) window.SHHH_TRACK.paymentSelected({ id: paymethod });
+  }, [paymethod]);
   const baseShip = subtotal > 60 ? 0 : courierObj.price;
   const pd = React.useMemo(() => {
     if (typeof promoDiscount === 'function' && appliedPromo) {

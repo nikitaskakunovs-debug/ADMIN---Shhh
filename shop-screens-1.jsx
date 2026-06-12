@@ -584,6 +584,11 @@ function CategoryScreen({ theme, nav, cardStyle, params, intent, openWelcome, fa
 // ─────────────────────────────────────────────────────────────
 function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleFavourite, quickBuy }) {
   const t = (typeof useT === "function") ? useT() : (k, fb) => fb || k;
+  // Marketing: product detail opened (Meta ViewContent via GTM).
+  React.useEffect(() => {
+    const prod = PRODUCTS.find(p => p.id === params?.id) || PRODUCTS[0];
+    if (prod && window.SHHH_TRACK) window.SHHH_TRACK.viewContent(prod);
+  }, [params?.id]);
   const product = PRODUCTS.find(p => p.id === params?.id) || PRODUCTS[0];
   const [swatch, setSwatch] = React.useState(0);
   const [imgIdx, setImgIdx] = React.useState(0);
@@ -1209,7 +1214,7 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
             {t("pdp.addToBag", "Add to bag")}
           </GhostButton>
           <PrimaryButton theme={theme}
-            onClick={() => { const v = { colour: (product.colourNames||[])[swatch], size: (product.sizes||[])[sizeIdx] }; for (let i = 0; i < qty; i++) addToCart(product.id, v); (quickBuy ? quickBuy(product.id, v) : nav('checkout')); }}
+            onClick={() => { const v = { colour: (product.colourNames||[])[swatch], size: (product.sizes||[])[sizeIdx] }; if (quickBuy) { for (let i = 1; i < qty; i++) addToCart(product.id, v); quickBuy(product.id, v); } else { for (let i = 0; i < qty; i++) addToCart(product.id, v); nav('checkout'); } }}
             full={false}
             style={{ flex: 1.4, whiteSpace: 'nowrap', padding: '0 16px' }}>
             {t("pdp.buyNow", "⚡ Buy")} · €{(product.price * qty)}

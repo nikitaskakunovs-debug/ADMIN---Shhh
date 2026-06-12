@@ -75,6 +75,27 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
   // Expose the applied card so the order submission can settle it server-side.
   React.useEffect(() => { window.__shhhGiftCard = giftCard ? { code: giftCard.code } : null; }, [giftCard]);
 
+  // ── Marketing tracking (no PII): totals snapshot + funnel events ──
+  React.useEffect(() => {
+    window.__shhhCheckoutTotals = { subtotal, shipping, discount: pd.discount || 0, gift: giftApplied, total };
+  }, [subtotal, shipping, pd.discount, giftApplied, total]);
+  const trackedStart = React.useRef(false);
+  React.useEffect(() => {
+    if (trackedStart.current || !window.SHHH_TRACK) return;
+    trackedStart.current = true;
+    window.SHHH_TRACK.checkoutStarted(cart, { subtotal, shipping, discount: pd.discount || 0, total });
+  }, []);
+  const firstCourier = React.useRef(true);
+  React.useEffect(() => {
+    if (firstCourier.current) { firstCourier.current = false; return; }
+    if (window.SHHH_TRACK) window.SHHH_TRACK.deliverySelected(courierObj, shipping);
+  }, [courier]);
+  const firstPay = React.useRef(true);
+  React.useEffect(() => {
+    if (firstPay.current) { firstPay.current = false; return; }
+    if (window.SHHH_TRACK) window.SHHH_TRACK.paymentSelected({ id: paymethod });
+  }, [paymethod]);
+
   const needsAddress = courierObj.type === 'door';
 
   // Sync external default if it changes via tweaks

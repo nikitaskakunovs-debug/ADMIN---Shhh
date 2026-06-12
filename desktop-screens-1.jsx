@@ -595,6 +595,10 @@ function DBrowse({ nav, params, favourites, toggleFavourite, quickBuy, openWelco
 function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy }) {
   const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const product = PRODUCTS.find(p => p.id === params?.id) || PRODUCTS[0];
+  // Marketing: product detail opened (Meta ViewContent via GTM).
+  React.useEffect(() => {
+    if (product && window.SHHH_TRACK) window.SHHH_TRACK.viewContent(product);
+  }, [product && product.id]);
   const [swatch, setSwatch] = React.useState(0);
   const [sizeIdx, setSizeIdx] = React.useState(0);
   const [qty, setQty] = React.useState(1);

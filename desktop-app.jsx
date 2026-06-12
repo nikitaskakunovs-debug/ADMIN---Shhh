@@ -43,6 +43,14 @@ function DAppInner() {
     else if (s === 'product') target = 'pdp';
     setScreen(target);
     setParams(p || {});
+    // Marketing: virtual page view per screen + product-card selection.
+    if (window.SHHH_TRACK) {
+      window.SHHH_TRACK.pageView(target);
+      if (target === 'pdp' && p && p.id) {
+        const prod = PRODUCTS.find(x => x.id === p.id);
+        if (prod) window.SHHH_TRACK.productSelected(prod);
+      }
+    }
     if (typeof updateSEO === 'function') {
       try { updateSEO(s, p || {}, window.__shhhLang || 'lv'); } catch (e) {}
     }
@@ -76,6 +84,10 @@ function DAppInner() {
   const addToCart = (id, variant) => {
     const colour = variant?.colour ?? null;
     const size = variant?.size ?? null;
+    if (window.SHHH_TRACK && id !== 'gift') {
+      const prod = PRODUCTS.find(x => x.id === id);
+      if (prod) window.SHHH_TRACK.addToCart(prod, { colour, size, qty: 1 });
+    }
     const key = id + (colour ? '|' + colour : '') + (size ? '|' + size : '');
     setCart(prev => {
       const ex = prev.find(p => (p.key || p.id) === key);
@@ -91,6 +103,10 @@ function DAppInner() {
   };
   const quickBuy = (id, variant) => {
     addToCart(id, variant);
+    if (window.SHHH_TRACK) {
+      const prod = PRODUCTS.find(x => x.id === id);
+      if (prod) window.SHHH_TRACK.quickBuy(prod);
+    }
     setScreen('checkout');
     setParams({ mode: 'fast' });
   };
@@ -143,6 +159,14 @@ function DAppInner() {
       console.info('[shhh] order recorded in the database as ' + r.ref);
       setLastOrder(prev => (prev && prev.ref === order.ref) ? { ...prev, ref: r.ref, dbRef: r.ref } : prev);
       setOrders(prev => prev.map(o => o.ref === order.ref ? { ...o, ref: r.ref, dbRef: r.ref } : o));
+      // Purchase fires ONLY on confirmed payment, with the SERVER-computed
+      // final paid total (incl. shipping, discounts, gift cards) for ROAS.
+      if (paid && window.SHHH_TRACK) {
+        window.SHHH_TRACK.purchase({
+          orderId: r.ref, payMethod: order.payMethod, items: order.items,
+          paidTotal: r.total, totals: order.totals,
+        });
+      }
     }).catch(e => console.warn('[shhh] order DB write failed', e));
   };
 
@@ -150,8 +174,12 @@ function DAppInner() {
     const items = cart;
     const total = orderTotal(items);
     const ref = ('SH' + Math.floor(Math.random() * 90000 + 10000));
+    const totals = window.__shhhCheckoutTotals || { total };
+    const trackSubmit = (o) => { if (window.SHHH_TRACK) window.SHHH_TRACK.orderSubmitted(o.ref, payMethod, o.items, totals); };
+    // Bank transfer: submitted but NOT paid — no payment_started, never Purchase.
     if (payMethod === 'transfer') {
-      const order = { ref, items, total, status: 'Gaida apmaksu', payMethod, paid: false, transfer: true };
+      const order = { ref, items, total, totals, status: 'Gaida apmaksu', payMethod, paid: false, transfer: true };
+      trackSubmit(order);
       setLastOrder(order);
       setOrders(prev => [order, ...prev]);
       window.__shhhLastTransferOrder = order;
@@ -162,16 +190,24 @@ function DAppInner() {
     }
     const pendingMethods = ['citadele', 'swedbank', 'seb', 'luminor', 'klix', 'inbank'];
     if (pendingMethods.includes(payMethod) && Math.random() < 0.5) {
-      const order = { ref, items, total, status: 'Gaida apmaksu', payMethod, paid: false };
+      const order = { ref, items, total, totals, status: 'Gaida apmaksu', payMethod, paid: false };
+      trackSubmit(order);
+      if (window.SHHH_TRACK) window.SHHH_TRACK.paymentStarted(ref, payMethod, items, totals);
       setLastOrder(order);
       submitOrderToDb(order, false);
-      setScreen('pending');
+      setScreen('pending'); // pending = NOT paid: Purchase does not fire here
       return;
     }
-    const order = { ref, items, total, status: 'Confirmed · arrives tomorrow', payMethod, paid: true };
+    const order = { ref, items, total, totals, status: 'Confirmed · arrives tomorrow', payMethod, paid: true };
+    trackSubmit(order);
+    if (window.SHHH_TRACK) window.SHHH_TRACK.paymentStarted(ref, payMethod, items, totals);
     setLastOrder(order);
     setOrders(prev => [order, ...prev]);
     submitOrderToDb(order, true);
+    // Offline preview (no database): fire Purchase locally so testing works.
+    if ((!window.SHHH_LIVE || window.SHHH_LIVE.status === 'fallback') && window.SHHH_TRACK) {
+      window.SHHH_TRACK.purchase({ orderId: ref, payMethod, items, paidTotal: totals.total != null ? totals.total : total, totals });
+    }
     setCart([]);
     setAppliedPromo(null);
     setScreen('confirmation');
@@ -185,6 +221,11 @@ function DAppInner() {
       if (prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
         window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'paid').catch(e => console.warn('[shhh] mark paid failed', e));
       }
+      // Retry succeeded: pending → paid — this IS a purchase.
+      if (window.SHHH_TRACK) {
+        const tt = prev.totals || { total: prev.total };
+        window.SHHH_TRACK.purchase({ orderId: prev.dbRef || prev.ref, payMethod: prev.payMethod, items: prev.items, paidTotal: tt.total != null ? tt.total : prev.total, totals: tt });
+      }
       return done;
     });
     setCart([]);
@@ -196,6 +237,7 @@ function DAppInner() {
       if (prev && prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
         window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'cancelled').catch(e => console.warn('[shhh] cancel failed', e));
       }
+      if (prev && window.SHHH_TRACK) window.SHHH_TRACK.paymentCancelled(prev.dbRef || prev.ref, prev.payMethod, prev.total);
       return null;
     });
     setScreen('cart');
