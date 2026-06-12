@@ -111,20 +111,21 @@ design showroom (`?stage=1`).
 10. Refresh confirmation → no second Purchase.
 11. `?stage=1` → events carry `is_stage:true` → conversion tags must not fire.
 
-## 7. Google Analytics 4 (optional, recommended — zero code changes)
+## 7. Google Analytics 4 — INSTALLED (G-P5RN3NFJ7J, direct gtag.js)
 
-The same dataLayer feeds GA4. The site's `items[]` array already uses GA4's
-exact ecommerce field names (`item_id`, `item_name`, `item_category`,
-`item_brand`, `price`, `quantity`), so everything maps directly.
+GA4 is wired **directly in code**, NOT through GTM:
+- `desktop.html` + `mobile.html` load gtag.js for **`G-P5RN3NFJ7J`** with
+  `send_page_view: false` (the site sends its own page_view per screen,
+  including the first).
+- `shop-tracking.js` forwards every funnel event to GA4 as its standard
+  ecommerce equivalent automatically (`?stage=1` excluded; `purchase`
+  carries `transaction_id` = order ref for dedup).
 
-### Setup
-1. Create a GA4 property (analytics.google.com) → copy its **`G-…`**
-   Measurement ID.
-2. In GTM add a **Google tag** with that ID, trigger *Initialization — All
-   Pages*, and set the configuration field **`send_page_view` = `false`**
-   (the site emits `shhh_page_view` on the initial load too — leaving the
-   automatic page_view on would double-count the first page).
-3. Add **GA4 Event tags** (all referencing the Google tag) per this map:
+⚠️ **Do NOT also create GA4 tags inside GTM** — events would double-count.
+GTM is for the Meta Pixel only. Remaining GA4 step: in GA4 Admin → Events,
+mark `purchase` as a key event.
+
+The active event map (implemented in code, for reference):
 
 | Trigger (custom event) | GA4 event | Key parameters |
 |---|---|---|

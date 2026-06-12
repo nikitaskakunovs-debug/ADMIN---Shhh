@@ -22,11 +22,55 @@
     };
   };
 
+  // ── GA4 bridge (gtag.js is installed directly with send_page_view off) ──
+  // Every funnel event is forwarded to GA4 as its standard ecommerce
+  // equivalent, so GA4's built-in funnel/revenue reports work with no GTM
+  // configuration. NOTE: do NOT also add GA4 tags inside GTM — that would
+  // double-count. The ?stage=1 showroom is excluded.
+  var GA4_EVENTS = {
+    shhh_page_view: 'page_view',
+    shhh_product_selected: 'select_item',
+    shhh_view_content: 'view_item',
+    shhh_add_to_cart: 'add_to_cart',
+    shhh_quick_buy: 'quick_buy',
+    shhh_order_form_started: 'begin_checkout',
+    shhh_delivery_provider_selected: 'add_shipping_info',
+    shhh_payment_provider_selected: 'add_payment_info',
+    shhh_order_submitted: 'order_submitted',
+    shhh_payment_started: 'payment_started',
+    shhh_purchase: 'purchase',
+    shhh_payment_cancelled: 'payment_cancelled',
+  };
+  var forwardToGa4 = function (full) {
+    try {
+      if (typeof window.gtag !== 'function') return;
+      if (full.is_stage) return; // never count showroom traffic
+      var name = GA4_EVENTS[full.event];
+      if (!name) return;
+      var p;
+      if (name === 'page_view') {
+        p = { page_location: full.page_location, page_title: full.page_title, page_type: full.page_type };
+      } else {
+        p = { currency: 'EUR' };
+        if (full.value != null) p.value = Number(full.value) || 0;
+        if (full.items && full.items.length) p.items = full.items;
+        else if (full.item_id) p.items = [{ item_id: full.item_id, item_name: full.item_name, item_category: full.item_category, item_brand: full.item_brand, price: full.price, quantity: full.quantity || 1 }];
+        if (name === 'purchase') { p.transaction_id = full.order_id; p.shipping = full.shipping; }
+        else if (full.order_id) p.order_id = full.order_id;
+        if (name === 'add_shipping_info') p.shipping_tier = full.delivery_provider;
+        if (name === 'add_payment_info') p.payment_type = full.payment_provider;
+      }
+      window.gtag('event', name, p);
+    } catch (e) {}
+  };
+
   var pushToDataLayer = function (payload) {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
     // event name first so DevTools object previews show it at a glance
-    window.dataLayer.push(Object.assign({ event: payload.event }, getTrackingContext(), payload));
+    var full = Object.assign({ event: payload.event }, getTrackingContext(), payload);
+    window.dataLayer.push(full);
+    forwardToGa4(full);
   };
 
   // Consistent item payload for every event (PII-free by construction).
