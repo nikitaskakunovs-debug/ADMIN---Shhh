@@ -139,7 +139,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       giftCard: (window.__shhhGiftCard && window.__shhhGiftCard.code) || '',
     }).then(r => {
       if (!r || !r.ref) return;
-      console.info('[shhh] order recorded in the database as ' + r.ref);
+      window.shhhLog && window.shhhLog('[shhh] order recorded in the database as ' + r.ref);
       setLastOrder(prev => (prev && prev.ref === order.ref) ? { ...prev, ref: r.ref, dbRef: r.ref } : prev);
       setOrders(prev => prev.map(o => o.ref === order.ref ? { ...o, ref: r.ref, dbRef: r.ref } : o));
       // Purchase fires ONLY on confirmed payment, with the SERVER-computed
@@ -150,7 +150,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
           items: order.items, paidTotal: r.total, totals: order.totals,
         });
       }
-    }).catch(e => console.warn('[shhh] order DB write failed', e));
+    }).catch(e => window.shhhWarn && window.shhhWarn('[shhh] order DB write failed', e));
   };
 
   const placeOrder = (payMethod) => {
@@ -211,7 +211,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       const done = { ...prev, status: 'Confirmed · arrives tomorrow', paid: true };
       setOrders(o => [done, ...o]);
       if (prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
-        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'paid').catch(e => console.warn('[shhh] mark paid failed', e));
+        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'paid').catch(e => window.shhhWarn && window.shhhWarn('[shhh] mark paid failed', e));
       }
       // Retry succeeded: the order just became paid — this IS a purchase.
       if (window.SHHH_TRACK) {
@@ -227,7 +227,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   const cancelPendingOrder = () => {
     setLastOrder(prev => {
       if (prev && prev.dbRef && window.SHHH_LIVE && window.SHHH_LIVE.status !== 'fallback') {
-        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'cancelled').catch(e => console.warn('[shhh] cancel failed', e));
+        window.SHHH_LIVE.setOrderStatus(prev.dbRef, 'cancelled').catch(e => window.shhhWarn && window.shhhWarn('[shhh] cancel failed', e));
       }
       if (prev && window.SHHH_TRACK) window.SHHH_TRACK.paymentCancelled(prev.dbRef || prev.ref, prev.payMethod, prev.total);
       return null;

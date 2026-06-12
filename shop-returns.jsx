@@ -62,9 +62,9 @@ function ReturnFormScreen({ theme, nav }) {
         if (r && r.ref) {
           setClaimNo(r.ref);
           if (window.__shhhClaims && window.__shhhClaims[order.ref]) window.__shhhClaims[order.ref].claimNo = r.ref;
-          console.info('[shhh] return claim recorded as ' + r.ref);
+          window.shhhLog && window.shhhLog('[shhh] return claim recorded as ' + r.ref);
         }
-      }).catch(e => console.warn('[shhh] return DB submit failed', e));
+      }).catch(e => window.shhhWarn && window.shhhWarn('[shhh] return DB submit failed', e));
     }
   };
   const [claimNo, setClaimNo] = React.useState('');

@@ -1161,8 +1161,8 @@ function ProductScreen({ theme, nav, params, addToCart, favourites = [], toggleF
                     window.SHHH_LIVE.submitReview({
                       product: product.id, name: rev.name, stars: rev.stars,
                       body: rev.body, orderRef: rev.orderRef || '',
-                    }).then(r => console.info('[shhh] review submitted for moderation', r))
-                      .catch(e => console.warn('[shhh] review DB submit failed', e));
+                    }).then(r => window.shhhLog && window.shhhLog('[shhh] review submitted for moderation', r))
+                      .catch(e => window.shhhWarn && window.shhhWarn('[shhh] review DB submit failed', e));
                   }
                 }} />
             </div>

@@ -197,7 +197,7 @@
       var key2 = 'shhh_purchase_fired_' + orderId;
       try {
         if (sessionStorage.getItem(key) || sessionStorage.getItem(key2)) {
-          console.info('[shhh] shhh_purchase for ' + orderId + ' already fired this session — skipped (dedupe).');
+          window.shhhLog && window.shhhLog('[shhh] shhh_purchase for ' + orderId + ' already fired this session — skipped (dedupe).');
           return;
         }
         sessionStorage.setItem(key, '1');
@@ -220,7 +220,7 @@
         // not exposed to the storefront yet). Do not fake them.
         items: items,
       }, totalsFields(opts.totals), metaFields(items)));
-      console.info('[shhh] shhh_purchase pushed to dataLayer: order ' + orderId + ' value €' + paid);
+      window.shhhLog && window.shhhLog('[shhh] shhh_purchase pushed to dataLayer: order ' + orderId + ' value €' + paid);
       } catch (e) { console.error('[shhh] shhh_purchase FAILED to push:', e); }
     },
 

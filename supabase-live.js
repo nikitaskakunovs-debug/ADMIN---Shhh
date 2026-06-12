@@ -5,6 +5,21 @@
    If Supabase is unreachable, the app falls back to the built-in demo
    data in shop-data.jsx — the site never breaks. */
 
+// ── Debug logging ────────────────────────────────────────────
+// Production consoles stay quiet. Enable diagnostics with ?debug=1 (sticky
+// for the session) or localStorage.setItem('shhh_debug','1'). Errors are
+// never silenced.
+(function () {
+  var on = false;
+  try {
+    if (/[?&]debug=1/.test(location.search)) { on = true; sessionStorage.setItem('shhh_debug', '1'); }
+    else on = sessionStorage.getItem('shhh_debug') === '1' || localStorage.getItem('shhh_debug') === '1';
+  } catch (e) {}
+  window.SHHH_DEBUG = on;
+  window.shhhLog = function () { if (window.SHHH_DEBUG) console.info.apply(console, arguments); };
+  window.shhhWarn = function () { if (window.SHHH_DEBUG) console.warn.apply(console, arguments); };
+})();
+
 window.SHHH_LIVE = {
   url: 'https://oqxbascndwsvnclpbmjg.supabase.co',
   // Publishable key: safe to ship in frontend code. Data access is
@@ -224,7 +239,7 @@ window.SHHH_LIVE = {
         if (typeof window.__shhhApplyStrings === 'function') window.__shhhApplyStrings();
         if (typeof window.__shhhApplyCms === 'function') window.__shhhApplyCms();
       }
-    } catch (e) { console.warn('[shhh] CMS overrides load failed', e); }
+    } catch (e) { window.shhhWarn && window.shhhWarn('[shhh] CMS overrides load failed', e); }
 
     // Reviews: approved ones feed the storefront product pages; the full
     // moderation queue (visible once signed in) feeds the admin.
@@ -240,12 +255,12 @@ window.SHHH_LIVE = {
           }
         });
       }
-    } catch (e) { console.warn('[shhh] reviews load failed', e); }
+    } catch (e) { window.shhhWarn && window.shhhWarn('[shhh] reviews load failed', e); }
 
     // Returns (admin only — locked to anonymous readers).
     if (this.session) {
       try { window.LIVE_RETURNS = await this.loadReturns(); }
-      catch (e) { console.warn('[shhh] returns load failed', e); }
+      catch (e) { window.shhhWarn && window.shhhWarn('[shhh] returns load failed', e); }
     }
 
     // Promo codes: the storefront validates against window.PROMO_CODES — make
@@ -273,14 +288,14 @@ window.SHHH_LIVE = {
           Object.assign(target, live);
         } else window.PROMO_CODES = live;
       }
-    } catch (e) { console.warn('[shhh] promo codes load failed', e); }
+    } catch (e) { window.shhhWarn && window.shhhWarn('[shhh] promo codes load failed', e); }
 
     // Orders are loaded too, into window.LIVE_ORDERS (adminLoad prefers it).
     try { window.LIVE_ORDERS = await this.loadOrders(); }
-    catch (e) { console.warn('[shhh] order load failed; using demo orders.', e); }
+    catch (e) { window.shhhWarn && window.shhhWarn('[shhh] order load failed; using demo orders.', e); }
 
     this.status = 'live';
-    console.info('[shhh] Live data loaded from Supabase: ' +
+    window.shhhLog && window.shhhLog('[shhh] Live data loaded from Supabase: ' +
       products.length + ' products, ' + brands.length + ' brands, ' + categories.length + ' categories' +
       (window.LIVE_ORDERS ? ', ' + window.LIVE_ORDERS.length + ' orders' : '') + '.');
     return { products: products.length, brands: brands.length, categories: categories.length };
