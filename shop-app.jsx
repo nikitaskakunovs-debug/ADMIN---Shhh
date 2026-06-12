@@ -146,8 +146,8 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       // final paid total (incl. shipping, discounts, gift cards) for ROAS.
       if (paid && window.SHHH_TRACK) {
         window.SHHH_TRACK.purchase({
-          orderId: r.ref, payMethod: order.payMethod, items: order.items,
-          paidTotal: r.total, totals: order.totals,
+          orderId: r.ref, dedupeKey: order.ref, payMethod: order.payMethod,
+          items: order.items, paidTotal: r.total, totals: order.totals,
         });
       }
     }).catch(e => console.warn('[shhh] order DB write failed', e));
@@ -198,7 +198,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
     submitOrderToDb(order, true);
     // Offline preview (no database): fire Purchase locally so testing works.
     if ((!window.SHHH_LIVE || window.SHHH_LIVE.status === 'fallback') && window.SHHH_TRACK) {
-      window.SHHH_TRACK.purchase({ orderId: ref, payMethod, items, paidTotal: totals.total != null ? totals.total : total, totals });
+      window.SHHH_TRACK.purchase({ orderId: ref, dedupeKey: ref, payMethod, items, paidTotal: totals.total != null ? totals.total : total, totals });
     }
     setCart([]);
     setScreen('confirmation');
@@ -216,7 +216,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       // Retry succeeded: the order just became paid — this IS a purchase.
       if (window.SHHH_TRACK) {
         const tt = prev.totals || { total: prev.total };
-        window.SHHH_TRACK.purchase({ orderId: prev.dbRef || prev.ref, payMethod: prev.payMethod, items: prev.items, paidTotal: tt.total != null ? tt.total : prev.total, totals: tt });
+        window.SHHH_TRACK.purchase({ orderId: prev.dbRef || prev.ref, dedupeKey: prev.ref, payMethod: prev.payMethod, items: prev.items, paidTotal: tt.total != null ? tt.total : prev.total, totals: tt });
       }
       return done;
     });

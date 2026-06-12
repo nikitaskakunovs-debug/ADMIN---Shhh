@@ -4,6 +4,20 @@
 // CONFIRMATION
 // ─────────────────────────────────────────────────────────────
 function DConfirmation({ nav, lastOrder }) {
+  // Safety net: a PAID order on the confirmation page always emits
+  // shhh_purchase (deduped per order; lookup views excluded).
+  React.useEffect(() => {
+    const o = lastOrder;
+    if (!o || !o.paid || o.fromLookup || !window.SHHH_TRACK) return;
+    const timer = setTimeout(() => {
+      const tt = o.totals || { total: o.total };
+      window.SHHH_TRACK.purchase({
+        orderId: o.dbRef || o.ref, dedupeKey: o.ref, payMethod: o.payMethod,
+        items: o.items || [], paidTotal: tt.total != null ? tt.total : o.total, totals: tt,
+      });
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [lastOrder && lastOrder.ref]);
   if (!lastOrder) {
     return (
       <main><Section><Container>

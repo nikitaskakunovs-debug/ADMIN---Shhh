@@ -1225,6 +1225,21 @@ function CheckoutScreen({ theme, nav, cart, subtotal: subtotalProp, checkoutFlow
 // ─────────────────────────────────────────────────────────────
 function ConfirmationScreen({ theme, nav, lastOrder, tone }) {
   const t = (typeof useT === "function") ? useT() : (k, fb) => fb || k;
+  // Safety net: a PAID order reaching the confirmation page must always emit
+  // shhh_purchase, even if the primary (server-response) emitter was missed.
+  // The per-order dedupe guard makes this a no-op when it already fired.
+  React.useEffect(() => {
+    const o = lastOrder;
+    if (!o || !o.paid || o.fromLookup || !window.SHHH_TRACK) return;
+    const timer = setTimeout(() => {
+      const tt = o.totals || { total: o.total };
+      window.SHHH_TRACK.purchase({
+        orderId: o.dbRef || o.ref, dedupeKey: o.ref, payMethod: o.payMethod,
+        items: o.items || [], paidTotal: tt.total != null ? tt.total : o.total, totals: tt,
+      });
+    }, 2500); // give the server-confirmed emitter (with the exact paid total) first go
+    return () => clearTimeout(timer);
+  }, [lastOrder && lastOrder.ref]);
   const items = lastOrder.items.map(c => ({
     ...c,
     product: c.id === 'gift' ? GIFT_PRODUCT : PRODUCTS.find(p => p.id === c.id),

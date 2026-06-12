@@ -179,14 +179,25 @@
     // THE conversion. Only called on confirmed payment; deduped per order id.
     // value/purchase_value = final amount the customer actually paid
     // (products + shipping − discounts − gift cards). ROAS depends on this.
+    // Has a purchase already fired for this dedupe key in this session?
+    purchaseFired: function (key) {
+      try { return !!sessionStorage.getItem('shhh_purchase_fired_' + key); } catch (e) { return false; }
+    },
+
     purchase: function (opts) {
       opts = opts || {};
       var orderId = opts.orderId;
       if (!orderId) return;
-      var key = 'shhh_purchase_fired_' + orderId;
+      // dedupeKey ties the primary (server-confirmed) emitter and the
+      // confirmation-page safety net to ONE event per order, even though the
+      // local ref is later replaced by the server ref.
+      var dk = opts.dedupeKey || orderId;
+      var key = 'shhh_purchase_fired_' + dk;
+      var key2 = 'shhh_purchase_fired_' + orderId;
       try {
-        if (sessionStorage.getItem(key)) return;
+        if (sessionStorage.getItem(key) || sessionStorage.getItem(key2)) return;
         sessionStorage.setItem(key, '1');
+        sessionStorage.setItem(key2, '1');
       } catch (e) {}
       var items = buildItemsPayload(opts.items || []);
       var paid = Number(opts.paidTotal);
