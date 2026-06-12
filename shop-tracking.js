@@ -25,7 +25,8 @@
   var pushToDataLayer = function (payload) {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push(Object.assign(getTrackingContext(), payload));
+    // event name first so DevTools object previews show it at a glance
+    window.dataLayer.push(Object.assign({ event: payload.event }, getTrackingContext(), payload));
   };
 
   // Consistent item payload for every event (PII-free by construction).
@@ -195,10 +196,14 @@
       var key = 'shhh_purchase_fired_' + dk;
       var key2 = 'shhh_purchase_fired_' + orderId;
       try {
-        if (sessionStorage.getItem(key) || sessionStorage.getItem(key2)) return;
+        if (sessionStorage.getItem(key) || sessionStorage.getItem(key2)) {
+          console.info('[shhh] shhh_purchase for ' + orderId + ' already fired this session — skipped (dedupe).');
+          return;
+        }
         sessionStorage.setItem(key, '1');
         sessionStorage.setItem(key2, '1');
       } catch (e) {}
+      try {
       var items = buildItemsPayload(opts.items || []);
       var paid = Number(opts.paidTotal);
       if (!isFinite(paid)) paid = 0;
@@ -215,6 +220,8 @@
         // not exposed to the storefront yet). Do not fake them.
         items: items,
       }, totalsFields(opts.totals), metaFields(items)));
+      console.info('[shhh] shhh_purchase pushed to dataLayer: order ' + orderId + ' value €' + paid);
+      } catch (e) { console.error('[shhh] shhh_purchase FAILED to push:', e); }
     },
 
     paymentFailed: function (orderRef, payMethod, total) {
