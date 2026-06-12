@@ -6,9 +6,8 @@ events to Meta Pixel. **One web container serves both pages.**
 
 ## 0. Container ID
 
-`desktop.html` and `mobile.html` contain the standard GTM snippet with the
-placeholder **`GTM-XXXXXXX`** (head script + body noscript — 2 spots per
-file, 4 total). Replace all four with the real container ID before launch.
+`desktop.html` and `mobile.html` contain the standard GTM snippet, head
+script + body noscript, wired to container **`GTM-NKLPLDSZ`** (installed).
 
 If Meta gives a domain-verification meta tag, add it inside `<head>` of both
 files.
