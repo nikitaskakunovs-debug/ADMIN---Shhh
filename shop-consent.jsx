@@ -5,9 +5,9 @@
 // ── LAUNCH CONFIG ─────────────────────────────────────────────
 // Drop your real IDs here at go-live. Leave '' to keep a tag dormant.
 const TRACKING = {
-  ga4: 'G-4WC2LJ49LH', // Google Analytics 4
-  clarity: 'x0mhyu3afe', // Microsoft Clarity
-  metaPixel: '698566206451686', // Meta/Facebook Pixel
+  ga4: 'G-P5RN3NFJ7J', // Google Analytics 4 (Shhh.lv property)
+  clarity: '',      // Microsoft Clarity — add your own ID to enable
+  metaPixel: '',    // Meta/Facebook Pixel — add your real Pixel ID to enable
   googleAds: '',    // e.g. 'AW-XXXXXXXXX'  (Google Ads remarketing)
   tiktok: '',       // e.g. 'CXXXXXXXXXXXX' (TikTok Pixel)
 };
@@ -59,7 +59,8 @@ function applyConsent(c) {
     function gtag(){ window.dataLayer.push(arguments); }
     window.gtag = window.gtag || gtag;
     window.gtag('js', new Date());
-    window.gtag('config', TRACKING.ga4, { anonymize_ip: true });
+    // send_page_view off: shop-tracking.js sends page_view per screen itself.
+    window.gtag('config', TRACKING.ga4, { anonymize_ip: true, send_page_view: false });
   }
   if (c.analytics && TRACKING.clarity && !window.__clarityLoaded) {
     window.__clarityLoaded = true;
@@ -100,6 +101,9 @@ function applyConsent(c) {
 }
 
 Object.assign(window, { TRACKING, COOKIE_REGISTRY, readConsent, writeConsent, applyConsent });
+// Returning visitors: re-arm consented tags on every page load (previously
+// tags only loaded in the click handler, so saved consent did nothing).
+applyConsent(readConsent());
 
 // ─────────────────────────────────────────────────────────────
 // ConsentBanner — bottom bar + customise modal

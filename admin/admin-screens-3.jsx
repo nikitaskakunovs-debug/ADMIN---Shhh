@@ -1099,7 +1099,7 @@ function SettingsGeneral({ ctx }) {
             ))}
           </div>
           <div style={{ fontFamily: AT.body, fontSize: 12.5, color: AT.inkSoft, marginBottom: 10 }}>Analytics (consent-gated)</div>
-          {[['ga4', 'Google Analytics 4', 'G-4WC2LJ49LH'], ['meta', 'Meta Pixel', '698566206451686']].map(([k, l, id]) => (
+          {[['ga4', 'Google Analytics 4', 'G-P5RN3NFJ7J'], ['meta', 'Meta Pixel', 'not set']].map(([k, l, id]) => (
             <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', cursor: 'pointer' }}>
               <input type="checkbox" checked={tracking[k]} onChange={e => { setTracking({ ...tracking, [k]: e.target.checked }); toast(`${l} ${e.target.checked ? 'enabled' : 'disabled'}`); }} />
               <span style={{ flex: 1, fontFamily: AT.body, fontSize: 13, color: AT.ink }}>{l}</span>

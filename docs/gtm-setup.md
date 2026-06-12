@@ -111,15 +111,23 @@ design showroom (`?stage=1`).
 10. Refresh confirmation → no second Purchase.
 11. `?stage=1` → events carry `is_stage:true` → conversion tags must not fire.
 
-## 7. Google Analytics 4 — INSTALLED (G-P5RN3NFJ7J, direct gtag.js)
+## 7. Google Analytics 4 — INSTALLED (G-P5RN3NFJ7J, consent-gated gtag.js)
 
-GA4 is wired **directly in code**, NOT through GTM:
-- `desktop.html` + `mobile.html` load gtag.js for **`G-P5RN3NFJ7J`** with
-  `send_page_view: false` (the site sends its own page_view per screen,
-  including the first).
+GA4 is wired **directly in code**, NOT through GTM, and **only loads after
+cookie consent** (GDPR):
+- The cookie banner (`shop-consent.jsx`, `TRACKING.ga4 = 'G-P5RN3NFJ7J'`)
+  injects gtag.js when the visitor grants the *analytics* category, with
+  `send_page_view: false`; saved consent re-arms it on every later visit.
 - `shop-tracking.js` forwards every funnel event to GA4 as its standard
   ecommerce equivalent automatically (`?stage=1` excluded; `purchase`
-  carries `transaction_id` = order ref for dedup).
+  carries `transaction_id` = order ref for dedup). Events before consent
+  are not sent to GA4 — by design.
+- The same consent config has dormant slots for Microsoft Clarity, the
+  Meta Pixel, Google Ads and TikTok — drop the real IDs in `TRACKING`
+  when available (Meta can alternatively stay in GTM; pick ONE path).
+- The agency prototype's placeholder IDs (Crocus GA4 `G-4WC2LJ49LH`,
+  a stray Clarity + Meta Pixel) have been removed — visitor data no
+  longer leaks to third-party accounts.
 
 ⚠️ **Do NOT also create GA4 tags inside GTM** — events would double-count.
 GTM is for the Meta Pixel only. Remaining GA4 step: in GA4 Admin → Events,
