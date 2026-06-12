@@ -111,6 +111,49 @@ design showroom (`?stage=1`).
 10. Refresh confirmation → no second Purchase.
 11. `?stage=1` → events carry `is_stage:true` → conversion tags must not fire.
 
+## 7. Google Analytics 4 (optional, recommended — zero code changes)
+
+The same dataLayer feeds GA4. The site's `items[]` array already uses GA4's
+exact ecommerce field names (`item_id`, `item_name`, `item_category`,
+`item_brand`, `price`, `quantity`), so everything maps directly.
+
+### Setup
+1. Create a GA4 property (analytics.google.com) → copy its **`G-…`**
+   Measurement ID.
+2. In GTM add a **Google tag** with that ID, trigger *Initialization — All
+   Pages*, and set the configuration field **`send_page_view` = `false`**
+   (the site emits `shhh_page_view` on the initial load too — leaving the
+   automatic page_view on would double-count the first page).
+3. Add **GA4 Event tags** (all referencing the Google tag) per this map:
+
+| Trigger (custom event) | GA4 event | Key parameters |
+|---|---|---|
+| `shhh_page_view` | `page_view` | page_location, page_title |
+| `shhh_product_selected` | `select_item` | items |
+| `shhh_view_content` | `view_item` | value, currency, items |
+| `shhh_add_to_cart` | `add_to_cart` | value, currency, items |
+| `shhh_order_form_started` | `begin_checkout` | value, currency, items |
+| `shhh_delivery_provider_selected` | `add_shipping_info` | shipping_tier = `delivery_provider` |
+| `shhh_payment_provider_selected` | `add_payment_info` | payment_type = `payment_provider` |
+| `shhh_order_submitted` | custom `order_submitted` | value, currency, order_id |
+| `shhh_payment_started` | custom `payment_started` | value, currency, order_id |
+| `shhh_purchase` | **`purchase`** | **transaction_id = `order_id`**, value, currency, shipping, items |
+| `shhh_payment_cancelled` | custom `payment_cancelled` | order_id |
+
+Notes:
+- `purchase` REQUIRES `transaction_id` — map it from the `order_id`
+  dataLayer variable. GA4 dedupes repeat purchases by transaction_id.
+- Apply the same `is_stage ≠ true` condition to the GA4 ecommerce/conversion
+  triggers as for Meta (§3) — or reuse the same triggers.
+- Mark `purchase` as a key event in GA4 Admin → Events.
+- Pass `items` via the `items` dataLayer variable (no remapping needed).
+
+### Google Ads (when campaigns start)
+Add a **Google Ads Conversion Tracking** tag (`AW-…`) triggered by
+`shhh_purchase`, with Conversion Value = `value`, currency EUR,
+Transaction ID = `order_id` (prevents double-counted conversions). Link
+GA4 ↔ Google Ads in GA4 Admin for audience sharing.
+
 ## TODO (needs backend)
 
 - `business_revenue` / `net_revenue` / `commission_revenue`: product costs
