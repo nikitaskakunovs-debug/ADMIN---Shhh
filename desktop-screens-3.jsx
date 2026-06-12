@@ -15,7 +15,7 @@ function DConfirmation({ nav, lastOrder }) {
         orderId: o.dbRef || o.ref, dedupeKey: o.ref, payMethod: o.payMethod,
         items: o.items || [], paidTotal: tt.total != null ? tt.total : o.total, totals: tt,
       });
-    }, 2500);
+    }, 700);
     return () => clearTimeout(timer);
   }, [lastOrder && lastOrder.ref]);
   if (!lastOrder) {

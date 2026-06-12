@@ -66,6 +66,7 @@ function DAppInner() {
     };
     if (typeof injectGlobalSEO === 'function') injectGlobalSEO();
     if (typeof updateSEO === 'function') updateSEO('home', {}, 'lv');
+    if (window.SHHH_TRACK) window.SHHH_TRACK.pageView(screen || 'home');
     window.__shhhLang = window.__shhhLang || 'lv';
     const onLang = (e) => { window.__shhhLang = e.detail || 'lv'; };
     window.addEventListener('shhh-lang-change', onLang);

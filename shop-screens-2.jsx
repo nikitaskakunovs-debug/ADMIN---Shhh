@@ -1237,7 +1237,7 @@ function ConfirmationScreen({ theme, nav, lastOrder, tone }) {
         orderId: o.dbRef || o.ref, dedupeKey: o.ref, payMethod: o.payMethod,
         items: o.items || [], paidTotal: tt.total != null ? tt.total : o.total, totals: tt,
       });
-    }, 2500); // give the server-confirmed emitter (with the exact paid total) first go
+    }, 700); // brief grace for the server-confirmed emitter (exact paid total); dedupe prevents a double
     return () => clearTimeout(timer);
   }, [lastOrder && lastOrder.ref]);
   const items = lastOrder.items.map(c => ({
