@@ -1,0 +1,16 @@
+{
+  "name": "shhh-storefront",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Shhh storefront. The .jsx files are the source of truth; tools/build.mjs precompiles them (Babel, at build time) into a Babel-free, production-React bundle for deployment. Edit .jsx, push to main, CI builds + deploys to gh-pages.",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "smoke": "node tools/smoke.mjs",
+    "deploy": "node tools/build.mjs && node tools/smoke.mjs"
+  },
+  "devDependencies": {
+    "@babel/standalone": "7.29.0",
+    "jsdom": "24.1.3"
+  }
+}
