@@ -654,7 +654,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                 <DProductBlob product={product} tint={images[swatch]} />
                 {total > 1 && (
                   <>
-                    <button onClick={() => setSwatch((swatch - 1 + total) % total)} style={{
+                    <button onClick={() => setSwatch((swatch - 1 + total) % total)} aria-label="Iepriekšējais attēls" type="button" style={{
                       all: 'unset', cursor: 'pointer', position: 'absolute',
                       top: '50%', left: 20, transform: 'translateY(-50%)',
                       width: 48, height: 48, borderRadius: 999,
@@ -662,7 +662,7 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
                     }}><DIcon name="chev" size={20} sw={2} color="currentColor" /><span style={{ transform: 'rotate(180deg)' }} /></button>
-                    <button onClick={() => setSwatch((swatch + 1) % total)} style={{
+                    <button onClick={() => setSwatch((swatch + 1) % total)} aria-label="Nākamais attēls" type="button" style={{
                       all: 'unset', cursor: 'pointer', position: 'absolute',
                       top: '50%', right: 20, transform: 'translateY(-50%)',
                       width: 48, height: 48, borderRadius: 999,
@@ -876,12 +876,12 @@ function DPDP({ nav, params, addToCart, favourites, toggleFavourite, quickBuy })
                   display: 'inline-flex', alignItems: 'center',
                   border: `1.5px solid ${DT.rule}`, borderRadius: 999, padding: 3, height: 56, boxSizing: 'border-box',
                 }}>
-                  <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{
+                  <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Samazināt daudzumu" type="button" style={{
                     all: 'unset', cursor: 'pointer', width: 38, height: 44,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: DT.ink,
                   }}><DIcon name="minus" size={18} /></button>
                   <span style={{ minWidth: 28, textAlign: 'center', fontFamily: DT.mono, fontSize: 15, fontWeight: 700, color: DT.ink }}>{qty}</span>
-                  <button onClick={() => setQty(q => q + 1)} style={{
+                  <button onClick={() => setQty(q => q + 1)} aria-label="Palielināt daudzumu" type="button" style={{
                     all: 'unset', cursor: 'pointer', width: 38, height: 44,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: DT.ink,
                   }}><DIcon name="plus" size={18} /></button>

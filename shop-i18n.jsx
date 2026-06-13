@@ -474,8 +474,11 @@ const LangContext = React.createContext({ lang: 'en', setLang: () => {} });
 
 function LangProvider({ children }) {
   const [lang, setLang] = React.useState('lv');
-  // Notify listeners on change so non-context-aware code can react.
+  // Notify listeners on change so non-context-aware code can react, and keep
+  // the document language in sync so screen readers use the right pronunciation
+  // (all switcher codes — lv/ru/en/lt/et — are valid BCP-47 primary subtags).
   React.useEffect(() => {
+    try { document.documentElement.lang = lang; } catch (e) {}
     window.dispatchEvent(new CustomEvent('shhh-lang-change', { detail: lang }));
   }, [lang]);
   return (

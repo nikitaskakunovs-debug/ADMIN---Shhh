@@ -122,9 +122,10 @@ cookie consent** (GDPR):
   ecommerce equivalent automatically (`?stage=1` excluded; `purchase`
   carries `transaction_id` = order ref for dedup). Events before consent
   are not sent to GA4 — by design.
-- The same consent config has dormant slots for Microsoft Clarity, the
-  Meta Pixel, Google Ads and TikTok — drop the real IDs in `TRACKING`
-  when available (Meta can alternatively stay in GTM; pick ONE path).
+- The same consent config now also loads the **TikTok Pixel** (see §8) and
+  has dormant slots for Microsoft Clarity, the Meta Pixel and Google Ads —
+  drop the real IDs in `TRACKING` when available (Meta can alternatively
+  stay in GTM; pick ONE path).
 - The agency prototype's placeholder IDs (Crocus GA4 `G-4WC2LJ49LH`,
   a stray Clarity + Meta Pixel) have been removed — visitor data no
   longer leaks to third-party accounts.
@@ -162,6 +163,43 @@ Add a **Google Ads Conversion Tracking** tag (`AW-…`) triggered by
 `shhh_purchase`, with Conversion Value = `value`, currency EUR,
 Transaction ID = `order_id` (prevents double-counted conversions). Link
 GA4 ↔ Google Ads in GA4 Admin for audience sharing.
+
+## 8. TikTok Pixel — INSTALLED (D8M8CDJC77UDGKSVL3GG, consent-gated)
+
+TikTok is wired **directly in code** like GA4 (NOT through GTM) and **only
+loads after the visitor grants the *ads* cookie category** (GDPR):
+
+- `shop-consent.jsx` (`TRACKING.tiktok = 'D8M8CDJC77UDGKSVL3GG'`) injects the
+  official `ttq` pixel under the *ads* consent category, alongside the Meta
+  Pixel / Google Ads slots. Saved consent re-arms it on every later visit.
+- `shop-tracking.js` forwards every funnel event to TikTok as its standard
+  event (the `?stage=1` showroom is excluded). Events before consent are not
+  sent — by design.
+
+Event map (implemented in `forwardToTikTok`):
+
+| Funnel event | TikTok event | Key parameters |
+|---|---|---|
+| `shhh_page_view` | `ttq.page()` | — |
+| `shhh_view_content` | `ViewContent` | contents, currency, value |
+| `shhh_add_to_cart` | `AddToCart` | contents, currency, value |
+| `shhh_order_form_started` | `InitiateCheckout` | contents, currency, value |
+| `shhh_order_submitted` | `PlaceAnOrder` | contents, currency, value |
+| `shhh_purchase` | **`CompletePayment`** | contents, currency, **value = final paid total**, `event_id` = `order_id` |
+
+- `CompletePayment` fires on confirmed payment only (same rule as Meta/GA4
+  purchase), carries the server-computed paid total, and sends `event_id`
+  (= order ref) so a future **TikTok Events API** (server-side) can dedupe
+  browser vs server events.
+- `contents[]` items are `{ content_id, content_type:'product',
+  content_name, quantity, price }` — no PII.
+
+⚠️ **Do NOT also add a TikTok tag inside GTM** — events would double-count
+(same rule as GA4). TikTok lives in code via `shop-consent.jsx`.
+
+Remaining (optional): in TikTok Events Manager, confirm the pixel is
+receiving `CompletePayment` with a non-zero value, then mark it as the
+optimisation event for campaigns.
 
 ## TODO (needs backend)
 

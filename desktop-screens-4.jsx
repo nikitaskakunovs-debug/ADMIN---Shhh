@@ -40,13 +40,14 @@ function DSearch({ nav, params, favourites, toggleFavourite, quickBuy }) {
             }}>
               <DIcon name="search" size={22} color={DT.inkSoft} />
               <input autoFocus value={q} onChange={e => setQ(e.target.value)}
+                type="search" aria-label={t('nav.search', 'Meklēt katalogā')}
                 placeholder={t('nav.search', 'Search the catalogue…')} style={{
                 flex: 1, border: 'none', background: 'transparent', outline: 'none',
                 fontFamily: DT.display, fontSize: 24, fontWeight: 600, color: DT.ink,
                 letterSpacing: DT.ld,
               }} />
               {q && (
-                <button type="button" onClick={() => setQ('')} style={{
+                <button type="button" onClick={() => setQ('')} aria-label={t('common.clear', 'Notīrīt')} style={{
                   all: 'unset', cursor: 'pointer', color: DT.inkSoft,
                 }}><DIcon name="close" size={20} /></button>
               )}

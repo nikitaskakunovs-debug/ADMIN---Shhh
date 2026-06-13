@@ -101,7 +101,7 @@ function DCart({ nav, cart, updateQty, addToCart, subtotal, appliedPromo, setApp
                             display: 'inline-flex', alignItems: 'center', gap: 0,
                             border: `1px solid ${DT.rule}`, borderRadius: 999, padding: 2, marginBottom: 8,
                           }}>
-                            <button onClick={() => updateQty(i.id, -1)} style={{
+                            <button onClick={() => updateQty(i.id, -1)} aria-label="Samazināt daudzumu" type="button" style={{
                               all: 'unset', cursor: 'pointer', width: 32, height: 32,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', color: DT.ink,
                             }}><DIcon name="minus" size={16} /></button>
@@ -109,7 +109,7 @@ function DCart({ nav, cart, updateQty, addToCart, subtotal, appliedPromo, setApp
                               minWidth: 28, textAlign: 'center', fontFamily: DT.mono,
                               fontSize: 14, color: DT.ink, fontWeight: 700,
                             }}>{i.qty}</span>
-                            <button onClick={() => updateQty(i.id, 1)} style={{
+                            <button onClick={() => updateQty(i.id, 1)} aria-label="Palielināt daudzumu" type="button" style={{
                               all: 'unset', cursor: 'pointer', width: 32, height: 32,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', color: DT.ink,
                             }}><DIcon name="plus" size={16} /></button>

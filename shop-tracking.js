@@ -64,6 +64,37 @@
     } catch (e) {}
   };
 
+  // ── TikTok bridge (pixel loads consent-gated via the cookie banner) ──
+  // Standard events per TikTok's pixel guide; purchase = CompletePayment with
+  // event_id (= order ref) so a future server-side Events API can dedupe.
+  var TT_EVENTS = {
+    shhh_view_content: 'ViewContent',
+    shhh_add_to_cart: 'AddToCart',
+    shhh_order_form_started: 'InitiateCheckout',
+    shhh_order_submitted: 'PlaceAnOrder',
+    shhh_purchase: 'CompletePayment',
+  };
+  var ttContents = function (full) {
+    var items = (full.items && full.items.length) ? full.items
+      : full.item_id ? [{ item_id: full.item_id, item_name: full.item_name, price: full.price, quantity: full.quantity || 1 }]
+      : [];
+    return items.map(function (i) {
+      return { content_id: i.item_id, content_type: 'product', content_name: i.item_name, quantity: i.quantity || 1, price: Number(i.price) || 0 };
+    });
+  };
+  var forwardToTikTok = function (full) {
+    try {
+      if (!window.ttq || full.is_stage) return;
+      if (full.event === 'shhh_page_view') { window.ttq.page(); return; }
+      var name = TT_EVENTS[full.event];
+      if (!name) return;
+      var props = { contents: ttContents(full), currency: 'EUR' };
+      if (full.value != null) props.value = Number(full.value) || 0;
+      var opts = full.order_id ? { event_id: String(full.order_id) } : undefined;
+      window.ttq.track(name, props, opts);
+    } catch (e) {}
+  };
+
   var pushToDataLayer = function (payload) {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
@@ -71,6 +102,7 @@
     var full = Object.assign({ event: payload.event }, getTrackingContext(), payload);
     window.dataLayer.push(full);
     forwardToGa4(full);
+    forwardToTikTok(full);
   };
 
   // Consistent item payload for every event (PII-free by construction).

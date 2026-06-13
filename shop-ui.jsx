@@ -11,7 +11,7 @@ const THEMES = {
     surface: '#FFFFFF',
     surfaceAlt: '#F2F2F0',
     ink: '#0A0A0A',
-    inkSoft: '#737373',
+    inkSoft: '#6E6E6E', // AA-safe (>=4.5:1) on white and the #F2F2F0 alt surface
     rule: 'rgba(10,10,10,0.08)',
     accent: '#2D4BFF',
     accentInk: '#FFFFFF',

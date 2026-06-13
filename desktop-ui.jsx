@@ -6,7 +6,7 @@ const DT = {
   surface: '#FFFFFF',
   surfaceAlt: '#F2F2F0',
   ink: '#0A0A0A',
-  inkSoft: '#737373',
+  inkSoft: '#6E6E6E', // AA-safe (>=4.5:1) on white and the #F2F2F0 alt surface
   rule: 'rgba(10,10,10,0.08)',
   accent: '#2D4BFF',
   radius: 16,
@@ -95,9 +95,9 @@ function GhostBtn({ children, onClick, size = 'md', full = false, style = {} }) 
   );
 }
 
-function IconBtn({ children, onClick, badge, style = {} }) {
+function IconBtn({ children, onClick, badge, label, style = {} }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} aria-label={label} type="button" style={{
       all: 'unset', cursor: 'pointer', position: 'relative',
       width: 40, height: 40, borderRadius: 999,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -145,7 +145,7 @@ function DIcon({ name, size = 22, color = 'currentColor', sw = 1.6 }) {
     filter: <path d="M3 5h18M6 12h12M10 19h4" {...p} />,
     info: <><circle cx="12" cy="12" r="9" {...p} /><path d="M12 11v6M12 8h.01" {...p} /></>,
   };
-  return <svg width={size} height={size} viewBox="0 0 24 24">{paths[name] || null}</svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">{paths[name] || null}</svg>;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -260,22 +260,25 @@ function TopNav({ nav, current, cartCount, favCount, openWelcome }) {
           }}>
             <DIcon name="search" size={16} color={DT.inkSoft} />
             <input value={q} onChange={e => setQ(e.target.value)}
+              type="search" aria-label={t('nav.search', 'Meklēt katalogā')}
               placeholder={t('nav.search', 'Search the catalogue…')} style={{
               flex: 1, border: 'none', background: 'transparent', outline: 'none',
               fontFamily: DT.body, fontSize: 13, color: DT.ink, minWidth: 0,
             }} />
           </form>
           <DLangSwitcher />
-          <IconBtn onClick={() => nav('account', { tab: 'favourites' })} badge={favCount}>
+          <IconBtn onClick={() => nav('account', { tab: 'favourites' })} badge={favCount}
+            label={t('nav.favourites', 'Vēlmes') + (favCount ? ` (${favCount})` : '')}>
             <DIcon name="heart" size={20} />
           </IconBtn>
-          <IconBtn onClick={() => nav('lookup')}>
+          <IconBtn onClick={() => nav('lookup')} label={t('nav.orders', 'Mani pasūtījumi')}>
             <DIcon name="box" size={20} />
           </IconBtn>
-          <IconBtn onClick={() => nav('account')}>
+          <IconBtn onClick={() => nav('account')} label={t('nav.account', 'Konts')}>
             <DIcon name="user" size={20} />
           </IconBtn>
-          <IconBtn onClick={() => nav('cart')} badge={cartCount}>
+          <IconBtn onClick={() => nav('cart')} badge={cartCount}
+            label={t('nav.cart', 'Grozs') + (cartCount ? ` (${cartCount})` : '')}>
             <DIcon name="bag" size={20} />
           </IconBtn>
         </div>
