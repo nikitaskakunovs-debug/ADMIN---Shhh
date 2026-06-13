@@ -24,7 +24,9 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
         <Container>
           <div style={{
             padding: '64px 0 72px',
-            display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 56,
+            // minmax keeps the product column from collapsing (and its tap
+            // targets from shrinking) when the page is viewed narrow.
+            display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(150px, 1fr)', gap: 56,
             alignItems: 'center',
           }}>
             <div>
@@ -34,7 +36,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
                 color: DT.inkSoft, marginBottom: 24,
               }}>{t('home.kicker', 'Adult shop · for every body')}</div>
               <h1 style={{
-                fontFamily: DT.display, fontWeight: 800, fontSize: 88,
+                fontFamily: DT.display, fontWeight: 800, fontSize: 'clamp(40px, 8vw, 88px)',
                 letterSpacing: DT.ld, lineHeight: 0.92,
                 color: DT.ink, margin: 0, marginBottom: 24,
               }}>
@@ -65,7 +67,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
                   transform: i % 2 === 1 ? 'translateY(24px)' : 'none',
                 }}>
                   <button onClick={() => nav('pdp', { id: p.id })} style={{
-                    all: 'unset', cursor: 'pointer', display: 'block', width: '100%',
+                    all: 'unset', cursor: 'pointer', display: 'block', width: '100%', aspectRatio: '1 / 1',
                   }}>
                     <DProductBlob product={p} tint={p.swatches[0]} />
                   </button>

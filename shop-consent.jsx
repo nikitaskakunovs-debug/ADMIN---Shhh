@@ -179,7 +179,7 @@ function ConsentBanner({ theme, open, onClose, forceCustomize, frameless = false
               </div>
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <button onClick={() => setLangOpen(o => !o)} aria-label={'Valoda: ' + ((langCtx.lang || 'lv').toUpperCase())} style={{
-                  all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3,
+                  all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, minHeight: 24,
                 }}>
                   <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>🌐</span>
                   <span style={{ fontFamily: theme.mono, fontSize: 10, fontWeight: 700, color: theme.inkSoft }}>
@@ -213,6 +213,7 @@ function ConsentBanner({ theme, open, onClose, forceCustomize, frameless = false
               Sīkfaili ļauj mums uzlabot lietotāju pieredzi un ieviest jaunas funkcijas. Novērtēsim, ja piekritīsi to izmantošanai.{' '}
               <button onClick={() => { window.__shhhNavLegal && window.__shhhNavLegal('cookies'); }} style={{
                 all: 'unset', cursor: 'pointer', color: theme.accent, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', minHeight: 24,
               }}>Lasīt vairāk</button>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -231,8 +232,8 @@ function ConsentBanner({ theme, open, onClose, forceCustomize, frameless = false
               }}>Piekrist visiem</button>
             </div>
             <button onClick={() => setView('customize')} style={{
-              all: 'unset', cursor: 'pointer', width: '100%', textAlign: 'center',
-              marginTop: 12, fontFamily: theme.body, fontSize: 12, fontWeight: 700,
+              all: 'unset', cursor: 'pointer', width: '100%', textAlign: 'center', boxSizing: 'border-box',
+              marginTop: 12, padding: '7px 0', fontFamily: theme.body, fontSize: 12, fontWeight: 700,
               letterSpacing: 0.4, textTransform: 'uppercase', color: theme.inkSoft,
             }}>⚙ Pielāgot</button>
           </>

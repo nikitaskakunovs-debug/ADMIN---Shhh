@@ -141,13 +141,13 @@ function AnnouncementBar({ theme, onApply, appliedPromo }) {
         if (onApply) onApply({ code: 'SUMMER20', ...PROMO_CODES['SUMMER20'] });
         setCopied(true); setTimeout(() => setCopied(false), 1500);
       }} style={{
-        all: 'unset', cursor: 'pointer', padding: '2px 8px', borderRadius: 6,
+        all: 'unset', cursor: 'pointer', padding: '5px 10px', borderRadius: 6,
         background: 'rgba(255,255,255,0.25)', fontWeight: 800, letterSpacing: 0.5,
       }}>{copied ? 'PIELIETOTS ✓' : 'SUMMER20'}</button>
       <span>🔥</span>
       <button onClick={() => setDismissed(true)} aria-label="Aizvērt" style={{
-        all: 'unset', cursor: 'pointer', position: 'absolute', right: 10, top: '50%',
-        transform: 'translateY(-50%)', width: 20, height: 20, borderRadius: 999,
+        all: 'unset', cursor: 'pointer', position: 'absolute', right: 8, top: '50%',
+        transform: 'translateY(-50%)', width: 24, height: 24, borderRadius: 999,
         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
       }}>✕</button>
     </div>

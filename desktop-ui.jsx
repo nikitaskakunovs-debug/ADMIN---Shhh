@@ -99,7 +99,7 @@ function IconBtn({ children, onClick, badge, label, style = {} }) {
   return (
     <button onClick={onClick} aria-label={label} type="button" style={{
       all: 'unset', cursor: 'pointer', position: 'relative',
-      width: 40, height: 40, borderRadius: 999,
+      width: 40, height: 40, flexShrink: 0, borderRadius: 999, // flexShrink:0 keeps a >=24px tap target when the nav is cramped
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       color: DT.ink, ...style,
     }}>
@@ -413,7 +413,7 @@ function DFooter({ nav }) {
     fontFamily: DT.body, fontSize: 11, fontWeight: 700,
     letterSpacing: DT.lc, textTransform: 'uppercase', marginBottom: 14, opacity: 0.72,
   };
-  const linkBtn = { all: 'unset', cursor: 'pointer', fontFamily: DT.body, fontSize: 13, opacity: 0.85, textAlign: 'left' };
+  const linkBtn = { all: 'unset', cursor: 'pointer', fontFamily: DT.body, fontSize: 13, opacity: 0.85, textAlign: 'left', padding: '5px 0', minHeight: 24, boxSizing: 'border-box' };
 
   return (
     <footer style={{ background: DT.ink, color: DT.bg, marginTop: 80 }}>
@@ -510,6 +510,7 @@ function DFooter({ nav }) {
           ].map(([l, go]) => (
             <button key={l} onClick={go} style={{
               all: 'unset', cursor: 'pointer', fontFamily: DT.body, fontSize: 12, opacity: 0.7,
+              padding: '6px 0', minHeight: 24, display: 'inline-flex', alignItems: 'center', boxSizing: 'border-box',
             }}>{l}</button>
           ))}
         </div>
