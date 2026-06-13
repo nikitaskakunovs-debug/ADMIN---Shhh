@@ -66,6 +66,13 @@ function toProdHtml(html, page) {
   let head = html.slice(0, i + marker.length);
   head = head.replace(/[ \t]*<link rel="preconnect" href="https:\/\/unpkg\.com"[^>]*>\r?\n/i, '');
   head = head.replace(/<!-- Fonts \+ CDN \(React\/Babel are served from unpkg\) -->/i, '<!-- Fonts -->');
+  // Preload the render-critical JS so it fetches at high priority during head
+  // parse (the page is client-rendered, so this bundle is the LCP path).
+  const preload =
+    '<link rel="preload" as="script" href="vendor/react.production.min.js">\n' +
+    '<link rel="preload" as="script" href="vendor/react-dom.production.min.js">\n' +
+    `<link rel="preload" as="script" href="dist/${page}.bundle.js?v=${VER}">\n`;
+  head = head.replace('</head>', preload + '</head>');
   return head +
     '\n\n<!-- Precompiled, Babel-free bundle + React production (see tools/build.mjs) -->\n' +
     '<script defer src="vendor/react.production.min.js"></script>\n' +
