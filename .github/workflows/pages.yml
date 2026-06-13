@@ -17,5 +17,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pages serves the gh-pages branch; mirror main into it on every push
-      - run: git push --force origin HEAD:gh-pages
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install build deps
+        run: npm ci
+
+      # Precompile the .jsx into a Babel-free, production-React bundle.
+      - name: Build
+        run: npm run build
+
+      # Deploy gate: boot the COMPILED bundles in jsdom. If either storefront
+      # page fails to render, the job fails here and gh-pages is NOT updated —
+      # a broken build can never reach the live site.
+      - name: Smoke test
+        run: npm run smoke
+
+      # Publish ./build to the gh-pages branch GitHub Pages serves.
+      - name: Publish to gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd build
+          git init -q -b gh-pages
+          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA::7}"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
