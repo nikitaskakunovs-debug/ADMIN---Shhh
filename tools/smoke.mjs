@@ -32,16 +32,35 @@ async function boot(page) {
   try {
     run('vendor/react.production.min.js');
     run('vendor/react-dom.production.min.js');
-    run(`build/dist/${page}.bundle.js`);
-  } catch (e) { errors.push('THROW during load: ' + (e.stack || e.message)); }
-  await new Promise((r) => setTimeout(r, 1200));
+    run(`build/dist/${page}.bundle.js`); // core (or single) bundle
+  } catch (e) { errors.push('THROW during core load: ' + (e.stack || e.message)); }
+  await new Promise((r) => setTimeout(r, 900)); // stay under the core's 1500ms idle rest-loader
   const root = win.document.getElementById('root');
   const kids = root ? root.childNodes.length : -1;
   const text = root ? (root.textContent || '').length : 0;
+
+  // If this page is code-split, load the lazy "rest" bundle and confirm it
+  // defines its screen components without error (the build's idle-loader would
+  // do this at runtime; we drive it explicitly so a bad split fails the gate).
+  let restNote = '';
+  const restRel = `build/dist/${page}.rest.js`;
+  if (fs.existsSync(path.join(ROOT, restRel))) {
+    try {
+      run(restRel);
+      win.__shhhRest = true;
+      win.dispatchEvent(new win.Event('shhh-rest-ready'));
+    } catch (e) { errors.push('THROW during rest load: ' + (e.stack || e.message)); }
+    await new Promise((r) => setTimeout(r, 350));
+    const need = ['DCheckout', 'DCart', 'DSearch', 'DContentHost'];
+    const missing = need.filter((g) => typeof win[g] !== 'function');
+    if (missing.length) errors.push('rest globals missing after load: ' + missing.join(','));
+    restNote = ` rest=loaded(${need.length - missing.length}/${need.length})`;
+  }
+
   // Ignore React dev warnings / benign noise; everything else is fatal.
   const fatal = errors.filter((e) => !/Warning:|act\(|deprecated/i.test(e));
   const ok = kids > 0 && text > 200 && fatal.length === 0;
-  console.log(`[smoke:${page}] root.children=${kids} text=${text} fatal=${fatal.length} -> ${ok ? 'OK' : 'FAIL'}`);
+  console.log(`[smoke:${page}] root.children=${kids} text=${text}${restNote} fatal=${fatal.length} -> ${ok ? 'OK' : 'FAIL'}`);
   fatal.slice(0, 8).forEach((e) => console.log('   ! ' + e.slice(0, 280)));
   return ok;
 }

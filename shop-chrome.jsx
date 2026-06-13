@@ -74,7 +74,7 @@ function PayLogo({ brand, h = 36 }) {
       }} />
       <span style={{
         fontFamily: 'system-ui, sans-serif', fontWeight: 700, fontSize: h * 0.38,
-        color: '#F47000', letterSpacing: -0.3,
+        color: '#B35400', letterSpacing: -0.3,
       }}>Swedbank</span>
     </span>
   );

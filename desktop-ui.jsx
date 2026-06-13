@@ -411,7 +411,7 @@ function DFooter({ nav }) {
   };
   const colTitle = {
     fontFamily: DT.body, fontSize: 11, fontWeight: 700,
-    letterSpacing: DT.lc, textTransform: 'uppercase', marginBottom: 14, opacity: 0.55,
+    letterSpacing: DT.lc, textTransform: 'uppercase', marginBottom: 14, opacity: 0.72,
   };
   const linkBtn = { all: 'unset', cursor: 'pointer', fontFamily: DT.body, fontSize: 13, opacity: 0.85, textAlign: 'left' };
 

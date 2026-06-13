@@ -23,6 +23,32 @@ const VER = String(Date.now());
 
 const PAGES = ['desktop', 'mobile'];
 
+// Code-splitting: files listed here are pulled OUT of a page's main bundle into
+// a lazy "<page>.rest.js" that the core bundle loads on idle (after first paint).
+// Only put files here whose components are NEVER rendered on the initial home
+// view — checkout/cart/search/content/legal screens. DApp guards navigation to
+// these screens until the rest bundle has loaded (window.__shhhRest). Anything
+// rendered unconditionally on home (DWelcomeModal in desktop-screens-3.jsx,
+// AnnouncementBar, the chrome) MUST stay in core. Empty set => single bundle.
+const REST_FILES = {
+  desktop: new Set([
+    'shop-checkout-bits.jsx', 'shop-content.jsx', 'shop-brands.jsx', 'shop-invoice.jsx',
+    'shop-returns.jsx', 'shop-cancel.jsx', 'shop-usage.jsx',
+    'desktop-screens-2.jsx', 'desktop-screens-4.jsx',
+  ]),
+  mobile: new Set(),
+};
+
+function compileSource(code, label) {
+  return Babel.transform(code, {
+    presets: ['env', 'react'],
+    sourceType: 'script',
+    compact: true,
+    comments: false,
+    filename: label.replace(/[#]/g, '_'),
+  }).code;
+}
+
 // Read a script's body: external src (minus ?v=) -> file contents; inline -> as-is.
 // Skips the React / ReactDOM / Babel CDN tags (the prod HTML supplies its own).
 function isVendorCdn(src) {
@@ -59,7 +85,7 @@ function collectSources(html, page) {
 // Turn the dev HTML into prod HTML: keep <head> (incl. GTM) + body chrome up to
 // #root, drop every body <script>, drop the now-unused unpkg preconnect, and add
 // React production + the compiled bundle (all deferred, order-preserving).
-function toProdHtml(html, page) {
+function toProdHtml(html, page, hasRest) {
   const marker = '<div id="root"></div>';
   const i = html.indexOf(marker);
   if (i === -1) throw new Error(`[build:${page}] no #root marker`);
@@ -67,11 +93,14 @@ function toProdHtml(html, page) {
   head = head.replace(/[ \t]*<link rel="preconnect" href="https:\/\/unpkg\.com"[^>]*>\r?\n/i, '');
   head = head.replace(/<!-- Fonts \+ CDN \(React\/Babel are served from unpkg\) -->/i, '<!-- Fonts -->');
   // Preload the render-critical JS so it fetches at high priority during head
-  // parse (the page is client-rendered, so this bundle is the LCP path).
+  // parse (the page is client-rendered, so this bundle is the LCP path). The
+  // lazy "rest" bundle is prefetched at LOW priority — cached for fast first
+  // navigation, but never on the home critical path.
   const preload =
     '<link rel="preload" as="script" href="vendor/react.production.min.js">\n' +
     '<link rel="preload" as="script" href="vendor/react-dom.production.min.js">\n' +
-    `<link rel="preload" as="script" href="dist/${page}.bundle.js?v=${VER}">\n`;
+    `<link rel="preload" as="script" href="dist/${page}.bundle.js?v=${VER}">\n` +
+    (hasRest ? `<link rel="prefetch" as="script" href="dist/${page}.rest.js?v=${VER}">\n` : '');
   head = head.replace('</head>', preload + '</head>');
   return head +
     '\n\n<!-- Precompiled, Babel-free bundle + React production (see tools/build.mjs) -->\n' +
@@ -86,25 +115,32 @@ async function bundlePage(page) {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const sources = collectSources(html, page);
   // Compile EACH source separately — exactly as babel-standalone does per
-  // <script> in the browser today — then concatenate the outputs in document
-  // order. sourceType:'script' + preset-env give sloppy-mode top-level globals
-  // and const->var, so deliberate redeclarations across files (e.g. desktop's
-  // DEFAULT_FILTERS overriding the shared one) keep working as they do at
-  // runtime. ';' between files guards against ASI at boundaries.
-  const js = sources.map(s => {
-    const out = Babel.transform(s.code, {
-      presets: ['env', 'react'],
-      sourceType: 'script',
-      compact: true,
-      comments: false,
-      filename: s.label.replace(/[#]/g, '_'),
-    });
-    return `/* ${s.label} */\n;${out.code}`;
-  }).join('\n');
-  fs.mkdirSync(path.join(OUT, 'dist'), { recursive: true });
-  fs.writeFileSync(path.join(OUT, 'dist', `${page}.bundle.js`), js);
-  fs.writeFileSync(path.join(OUT, `${page}.html`), toProdHtml(html, page));
-  return { page, files: sources.length, bytes: js.length };
+  // <script> in the browser today. sourceType:'script' + preset-env give
+  // sloppy-mode top-level globals and const->var, so deliberate redeclarations
+  // across files (e.g. desktop's DEFAULT_FILTERS overriding the shared one)
+  // keep working as they do at runtime. ';' between files guards against ASI.
+  const restSet = REST_FILES[page] || new Set();
+  const core = [], rest = [];
+  for (const s of sources) (restSet.has(s.label) ? rest : core).push(s);
+  const group = (arr) => arr.map(s => `/* ${s.label} */\n;${compileSource(s.code, s.label)}`).join('\n');
+
+  const distDir = path.join(OUT, 'dist');
+  fs.mkdirSync(distDir, { recursive: true });
+  let coreJs = group(core);
+  if (rest.length) {
+    fs.writeFileSync(path.join(distDir, `${page}.rest.js`), group(rest));
+    // On-demand loader (idempotent). DApp calls it the moment the user heads to
+    // a lazy screen. Until then the rest bundle never executes, so it's off the
+    // home page's critical path AND out of its "unused JS". A <link rel=prefetch>
+    // (added in toProdHtml) warms the cache so that first navigation is instant.
+    coreJs += `\n;window.__shhhLoadRest=function(){if(window.__shhhRestStarted)return;window.__shhhRestStarted=true;` +
+      `var s=document.createElement('script');s.src='dist/${page}.rest.js?v=${VER}';s.async=false;` +
+      `s.onload=function(){window.__shhhRest=true;try{window.dispatchEvent(new Event('shhh-rest-ready'));}catch(e){}};` +
+      `(document.body||document.documentElement).appendChild(s);};`;
+  }
+  fs.writeFileSync(path.join(distDir, `${page}.bundle.js`), coreJs);
+  fs.writeFileSync(path.join(OUT, `${page}.html`), toProdHtml(html, page, rest.length > 0));
+  return { page, core: core.length, rest: rest.length, bytes: coreJs.length };
 }
 
 function copyTree() {
@@ -123,7 +159,8 @@ async function main() {
   const stats = [];
   for (const p of PAGES) stats.push(await bundlePage(p));
   for (const s of stats) {
-    console.log(`  ${s.page}.bundle.js  <-  ${s.files} sources  =  ${(s.bytes / 1024).toFixed(0)} KB minified`);
+    console.log(`  ${s.page}: core=${s.core} files (${(s.bytes / 1024).toFixed(0)} KB)` +
+      (s.rest ? `  + rest=${s.rest} files (lazy)` : ''));
   }
   console.log(`build/ ready (v=${VER})`);
 }

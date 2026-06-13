@@ -178,10 +178,10 @@ function ConsentBanner({ theme, open, onClose, forceCustomize, frameless = false
                 Mēs izmantojam sīkfailus
               </div>
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <button onClick={() => setLangOpen(o => !o)} aria-label="Valoda" style={{
+                <button onClick={() => setLangOpen(o => !o)} aria-label={'Valoda: ' + ((langCtx.lang || 'lv').toUpperCase())} style={{
                   all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3,
                 }}>
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>🌐</span>
+                  <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>🌐</span>
                   <span style={{ fontFamily: theme.mono, fontSize: 10, fontWeight: 700, color: theme.inkSoft }}>
                     {(langCtx.lang || 'lv').toUpperCase() === 'ET' ? 'EE' : (langCtx.lang || 'lv').toUpperCase()}
                   </span>

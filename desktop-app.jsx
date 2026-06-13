@@ -33,6 +33,16 @@ function DAppInner() {
   const [appliedPromo, setAppliedPromo] = React.useState(null);
   const [consentDone, setConsentDone] = React.useState(false);
   const [consentReopen, setConsentReopen] = React.useState(false);
+  // Cart/checkout/search/content screens ship in a deferred bundle that loads on
+  // idle (after first paint). Until it arrives, navigating to one shows a brief
+  // loader rather than rendering an undefined component.
+  const [restReady, setRestReady] = React.useState(() => typeof window !== 'undefined' && !!window.__shhhRest);
+  React.useEffect(() => {
+    if (window.__shhhRest) { setRestReady(true); return; }
+    const h = () => setRestReady(true);
+    window.addEventListener('shhh-rest-ready', h);
+    return () => window.removeEventListener('shhh-rest-ready', h);
+  }, []);
 
   React.useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [screen, params?.id, params?.key]);
 
@@ -253,6 +263,13 @@ function DAppInner() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const favCount = favourites.length;
   const isContent = D_CONTENT_SCREENS.includes(screen);
+  // Screens whose components live in the lazy "rest" bundle (see tools/build.mjs).
+  const REST_SCREENS = ['cart', 'checkout', 'search', 'pending', 'transferConfirm', '404'];
+  const needsRest = isContent || REST_SCREENS.includes(screen);
+  const blocked = !restReady && needsRest;
+  // The instant any path reaches a lazy screen (nav, quick-buy, place-order),
+  // kick off loading the rest bundle. The loader is idempotent.
+  React.useEffect(() => { if (needsRest && !restReady && window.__shhhLoadRest) window.__shhhLoadRest(); }, [needsRest, restReady]);
 
   return (
     <div style={{ background: DT.bg, color: DT.ink, minHeight: '100vh', fontFamily: DT.body }}>
@@ -263,6 +280,14 @@ function DAppInner() {
       <TopNav nav={nav} current={screen}
         cartCount={cartCount} favCount={favCount} openWelcome={openWelcome} />
 
+      {blocked && (
+        <DContentFrame width={760}>
+          <div style={{ padding: '110px 0', textAlign: 'center', fontFamily: DT.body, color: DT.inkSoft, fontSize: 14 }}>
+            <span className="shhh-grad-text" style={{ fontWeight: 700 }}>shhh…</span>
+          </div>
+        </DContentFrame>
+      )}
+      {!blocked && (<>
       {screen === 'home' && (
         <DHome nav={nav} subtotal={subtotal} intent={intent} openWelcome={openWelcome}
           favourites={favourites} toggleFavourite={toggleFavourite} quickBuy={quickBuy} />
@@ -313,6 +338,7 @@ function DAppInner() {
         <DContentHost screen={screen} params={params} nav={nav}
           favourites={favourites} toggleFavourite={toggleFavourite} quickBuy={quickBuy} />
       )}
+      </>)}
 
       <DFooter nav={nav} />
 
