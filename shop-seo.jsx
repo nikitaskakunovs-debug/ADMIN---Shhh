@@ -102,6 +102,11 @@ function injectGlobalSEO() {
 
 // Update SEO for the current screen. Pulls product / content / category context.
 function updateSEO(screen, params, lang) {
+  // Normalise the apps' internal screen names to the SEO map's keys. The desktop
+  // router uses 'pdp'/'browse'; without this the product/category schema, title
+  // and canonical never fired on real navigation.
+  if (screen === 'pdp') screen = 'product';
+  else if (screen === 'browse' || screen === 'search') screen = 'category';
   const base = SEO_MAP[screen] || SEO_MAP.home;
   let title = base.title;
   let desc = base.desc;
@@ -158,6 +163,7 @@ function updateSEO(screen, params, lang) {
     if (!_kw && g.defaultKeywords) _kw = g.defaultKeywords;
     if (!_ogImage && g.defaultOgImage) _ogImage = g.defaultOgImage;
   } catch (e) {}
+  if (!_ogImage) _ogImage = (SITE.baseUrl || '') + '/og-image.png'; // branded default share card
 
   const fullTitle = title ? `${title} | Shhh` : 'Shhh — diskrēts seksa veikals';
   document.title = fullTitle;
@@ -203,29 +209,54 @@ function updateSEO(screen, params, lang) {
     _setJsonLd('ld-breadcrumb', null);
   }
 
-  // Product schema
+  // Product schema — built from the REAL product record (no hardcoded values).
   if (product) {
-    _setJsonLd('ld-product', {
+    const inStock = typeof product.stock === 'number' ? product.stock > 0 : product.stock !== 'out';
+    const ld = {
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.name,
-      description: product.desc,
+      description: (product.desc || product.tagline || '').slice(0, 5000),
       sku: product.id,
+      mpn: product.id,
       material: product.material,
-      brand: { '@type': 'Brand', name: 'Shhh' },
+      brand: { '@type': 'Brand', name: product.brand || 'Shhh' },
       offers: {
         '@type': 'Offer',
-        price: product.price,
+        price: Number(product.price).toFixed(2),
         priceCurrency: 'EUR',
-        availability: 'https://schema.org/InStock',
+        priceValidUntil: new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10),
+        itemCondition: 'https://schema.org/NewCondition',
+        availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         url: canonical,
-        seller: { '@type': 'Organization', name: 'NL Trading Co SIA' },
+        seller: { '@type': 'Organization', '@id': SITE.baseUrl + '/#org' },
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy', applicableCountry: ['LV', 'LT', 'EE'],
+          returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+          merchantReturnDays: 30, returnMethod: 'https://schema.org/ReturnByMail',
+          returnFees: 'https://schema.org/FreeReturn',
+        },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'EUR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: ['LV', 'LT', 'EE'] },
+          deliveryTime: { '@type': 'ShippingDeliveryTime',
+            handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+            transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' } },
+        },
       },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.7', reviewCount: 128,
-      },
-    });
+    };
+    // GTIN comes from the product's barcode (`code`), if it is a valid 8–14 digit barcode.
+    if (product.code && /^\d{8,14}$/.test(String(product.code))) ld.gtin = String(product.code);
+    if (product.colourNames && product.colourNames.length) ld.color = product.colourNames.join(', ');
+    // Rating only if the product actually carries one (no fabricated site-wide constant).
+    if (product.rating && product.reviewCount) {
+      ld.aggregateRating = {
+        '@type': 'AggregateRating', ratingValue: String(product.rating),
+        reviewCount: Number(product.reviewCount), bestRating: 5, worstRating: 1,
+      };
+    }
+    _setJsonLd('ld-product', ld);
   } else {
     _setJsonLd('ld-product', null);
   }

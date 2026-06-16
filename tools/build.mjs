@@ -21,6 +21,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'build');
 const VER = String(Date.now());
 
+// ── THE ONE PLACE TO SET YOUR DOMAIN ───────────────────────────────────────
+// Every canonical, Open Graph tag, sitemap URL, llms.txt link, robots.txt
+// Sitemap line and JSON-LD @id in the DEPLOYED site is rewritten to this at
+// build time. Leave as-is to keep https://shhh.lv; change it here (one line)
+// when your live domain differs — then connect that domain's DNS to GitHub Pages.
+const SITE_URL = 'https://shhh.lv';
+
 const PAGES = ['desktop', 'mobile'];
 
 // Code-splitting: files listed here are pulled OUT of a page's main bundle into
@@ -153,11 +160,32 @@ function copyTree() {
   }
 }
 
+// Rewrite the placeholder domain to SITE_URL across the whole deployed tree, so
+// the domain lives in exactly one place (the SITE_URL constant above).
+function applyDomain() {
+  const target = SITE_URL.replace(/\/$/, '');
+  if (target === 'https://shhh.lv') return; // default — already correct in source
+  const exts = new Set(['.html', '.htm', '.txt', '.xml', '.js', '.json', '.webmanifest']);
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (exts.has(path.extname(e.name))) {
+        const s = fs.readFileSync(p, 'utf8');
+        if (s.includes('https://shhh.lv')) fs.writeFileSync(p, s.split('https://shhh.lv').join(target));
+      }
+    }
+  };
+  walk(OUT);
+  console.log(`  domain -> ${target}`);
+}
+
 async function main() {
   copyTree();
   fs.writeFileSync(path.join(OUT, '.nojekyll'), ''); // serve dist/ verbatim, no Jekyll
   const stats = [];
   for (const p of PAGES) stats.push(await bundlePage(p));
+  applyDomain();
   for (const s of stats) {
     console.log(`  ${s.page}: core=${s.core} files (${(s.bytes / 1024).toFixed(0)} KB)` +
       (s.rest ? `  + rest=${s.rest} files (lazy)` : ''));
