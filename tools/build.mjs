@@ -19,14 +19,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'build');
-const VER = String(Date.now());
+import { SITE_URL } from './site.config.mjs';
 
-// ── THE ONE PLACE TO SET YOUR DOMAIN ───────────────────────────────────────
-// Every canonical, Open Graph tag, sitemap URL, llms.txt link, robots.txt
-// Sitemap line and JSON-LD @id in the DEPLOYED site is rewritten to this at
-// build time. Leave as-is to keep https://shhh.lv; change it here (one line)
-// when your live domain differs — then connect that domain's DNS to GitHub Pages.
-const SITE_URL = 'https://shhh.lv';
+const VER = String(Date.now());
 
 const PAGES = ['desktop', 'mobile'];
 
