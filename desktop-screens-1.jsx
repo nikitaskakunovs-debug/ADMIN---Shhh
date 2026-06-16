@@ -433,6 +433,7 @@ function DHome({ nav, subtotal, intent, openWelcome, favourites, toggleFavourite
 // BROWSE — sidebar filters + grid
 // ─────────────────────────────────────────────────────────────
 function DBrowse({ nav, params, favourites, toggleFavourite, quickBuy, openWelcome }) {
+  const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const [filters, setFilters] = React.useState({ ...DEFAULT_FILTERS, cat: params?.cat || 'all' });
   const [sort, setSort] = React.useState('featured');
   const isFav = (id) => favourites.includes(id);
