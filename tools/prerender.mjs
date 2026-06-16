@@ -36,7 +36,7 @@ async function render(page, route) {
   run('vendor/react.production.min.js');
   run('vendor/react-dom.production.min.js');
   run(`dist/${page}.bundle.js`);
-  await new Promise((r) => setTimeout(r, 1800));
+  await new Promise((r) => setTimeout(r, 1300));
   const doc = w.document;
   const root = doc.getElementById('root');
   const out = {
@@ -64,18 +64,27 @@ function deviceLoader(ver) {
     `a((m?'dist/mobile.bundle.js':'dist/desktop.bundle.js')+'?v=${ver}');})();</script>`;
 }
 
+// Deep routes load only the mobile bundle (which reads the baked __shhhRoute).
+function mobileLoader(ver) {
+  return `<script defer src="vendor/react.production.min.js"></script>\n` +
+    `<script defer src="vendor/react-dom.production.min.js"></script>\n` +
+    `<script defer src="dist/mobile.bundle.js?v=${ver}"></script>`;
+}
+
 // Assemble a crawlable static file from the mobile template + rendered fragment.
-function assemble(template, r, ver) {
+function assemble(template, r, ver, route) {
   let html = template;
   // 1) route-specific <head> (title/description/canonical) + JSON-LD
   if (r.title) html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(r.title)}</title>`);
   if (r.desc) html = html.replace(/(<meta name="description" content=")[^"]*(">)/, `$1${esc(r.desc)}$2`);
   if (r.canonical) html = html.replace(/(<link rel="canonical" href=")[^"]*(">)/, `$1${esc(r.canonical)}$2`);
-  const ld = r.jsonld.join('\n');
-  html = html.replace('</head>', ld + '\n</head>');
-  // 2) drop the bundle-specific preload + the three bundle <script> tags
+  html = html.replace('</head>', r.jsonld.join('\n') + '\n</head>');
+  // 2) drop bundle preload; home device-routes desktop/mobile, deep routes bake
+  //    the route + load mobile so the right screen renders for users too.
   html = html.replace(/<link rel="preload" as="script" href="dist\/[^"]*">\s*/g, '');
-  html = html.replace(/<!-- Precompiled[\s\S]*?<\/script>\s*<\/body>/, deviceLoader(ver) + '\n</body>');
+  const routeScript = route.r ? `<script>window.__shhhRoute=${JSON.stringify(route.r)};</script>\n` : '';
+  const loader = route.r ? mobileLoader(ver) : deviceLoader(ver);
+  html = html.replace(/<!-- Precompiled[\s\S]*?<\/script>\s*<\/body>/, routeScript + loader + '\n</body>');
   // 3) bake the rendered content + body class
   if (r.bodyClass) html = html.replace('<body>', `<body class="${esc(r.bodyClass)}">`);
   html = html.replace('<div id="root"></div>', `<div id="root">${r.rootHTML}</div>`);
@@ -115,7 +124,7 @@ function buildLlms({ products, landings, content, legal, brandNames }) {
 
   let idx = `# ${SITE.name} — ${SITE.tagline}\n\n> ${SITE.summary} Operē ${SITE.legalName} (Rīga, LV).\n\n`;
   idx += `## Kategorijas\n`;
-  for (const k of Object.keys(landings)) idx += `- [${landings[k].title}](${base}/kategorija/${landings[k].cat || k}): ${sentence(landings[k].intro)}\n`;
+  for (const k of Object.keys(landings)) idx += `- [${landings[k].title}](${base}/kategorija/${k}): ${sentence(landings[k].intro)}\n`;
   idx += `\n## Produkti\n`;
   for (const p of products) idx += `- [${p.name}](${base}/produkts/${p.id}): ${p.brand ? p.brand + ', ' : ''}€${p.price}, ${clean(p.ptype) || p.category}.\n`;
   idx += `\n## Ceļveži un info\n`;
@@ -139,7 +148,7 @@ function buildLlms({ products, landings, content, legal, brandNames }) {
     const l = landings[k]; full += `### ${l.title}\n${clean(l.intro)}\n`;
     const subs = (l.subs || []).map((s) => typeof s === 'string' ? s : (s.label || s.name || s.title || '')).filter(Boolean);
     if (subs.length) full += `Apakškategorijas: ${subs.join(', ')}.\n`;
-    full += `URL: ${base}/kategorija/${l.cat || k}\n\n`;
+    full += `URL: ${base}/kategorija/${k}\n\n`;
   }
   full += `## Produkti (${products.length})\n`;
   for (const p of products) {
@@ -168,33 +177,55 @@ function buildLlms({ products, landings, content, legal, brandNames }) {
 async function prerender(routes) {
   const template = fs.readFileSync(path.join(OUT, 'mobile.html'), 'utf8');
   const ver = (template.match(/mobile\.bundle\.js\?v=(\d+)/) || [])[1] || Date.now();
-  let ok = 0;
+  const done = [];
   for (const route of routes) {
-    const r = await render('mobile', route);
-    if (r.textLen < 300) { console.log(`  [prerender] SKIP ${route.label} (only ${r.textLen} chars rendered)`); continue; }
+    let r;
+    try { r = await render('mobile', route); }
+    catch (e) { console.log(`  [prerender] error ${route.label}: ${(e && e.message || '').slice(0, 60)}`); continue; }
+    if (!r || r.textLen < 300) continue; // thin/empty page — leave it client-rendered
     const file = path.join(OUT, route.out);
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, assemble(template, r, ver));
-    console.log(`  [prerender] ${route.out}  (${r.textLen} chars, schema: ${r.jsonld.length})`);
-    ok++;
+    fs.writeFileSync(file, assemble(template, r, ver, route));
+    done.push({ path: route.path, priority: route.priority || 0.6 });
   }
-  return ok;
+  return done;
 }
 
-// v1: the homepage (zero-param). Product/category/content routes get added here
-// once the bundle reads window.__shhhRoute for its initial screen.
-const ROUTES = [
-  { label: 'home', path: '', out: 'index.html' },
-];
+function writeSitemap(routes) {
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = routes.map((r) =>
+    `  <url>\n    <loc>${SITE_URL}/${r.path}</loc>\n    <lastmod>${today}</lastmod>\n` +
+    `    <changefreq>weekly</changefreq>\n    <priority>${Number(r.priority).toFixed(1)}</priority>\n  </url>`).join('\n');
+  fs.writeFileSync(path.join(OUT, 'sitemap.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
+}
+
+// Build the full route list from the live data. Each deep route carries the
+// internal screen + params the app boots from (baked as window.__shhhRoute).
+function routesFrom(data) {
+  const routes = [{ label: 'home', path: '', out: 'index.html', priority: 1.0 }];
+  for (const p of data.products)
+    routes.push({ label: 'product ' + p.id, path: 'produkts/' + p.id, out: `produkts/${p.id}/index.html`, r: { screen: 'product', params: { id: p.id } }, priority: 0.8 });
+  for (const k of Object.keys(data.landings))
+    routes.push({ label: 'category ' + k, path: 'kategorija/' + k, out: `kategorija/${k}/index.html`, r: { screen: 'catland', params: { cat: k } }, priority: 0.7 });
+  // Skip the auto-generated per-brand content pages (~260 brands have no
+  // products, so those pages are thin) — index the real guides/info/FAQ.
+  for (const k of Object.keys(data.content).filter((k) => !/^brand-/.test(k)))
+    routes.push({ label: 'info ' + k, path: 'info/' + k, out: `info/${k}/index.html`, r: { screen: 'content', params: { key: k } }, priority: 0.6 });
+  for (const k of Object.keys(data.legal))
+    routes.push({ label: 'legal ' + k, path: 'juridiski/' + k, out: `juridiski/${k}/index.html`, r: { screen: 'legal', params: { key: k } }, priority: 0.4 });
+  return routes;
+}
 
 async function main() {
   const data = await collectData('mobile');
   const { index, full } = buildLlms(data);
   fs.writeFileSync(path.join(OUT, 'llms.txt'), index);
   fs.writeFileSync(path.join(OUT, 'llms-full.txt'), full);
-  console.log(`  [llms] llms.txt (${(index.length / 1024).toFixed(1)} KB) + llms-full.txt (${(full.length / 1024).toFixed(1)} KB) from ${data.products.length} products, ${Object.keys(data.landings).length} categories`);
-  const n = await prerender(ROUTES);
-  console.log(`prerender: ${n} page(s)`);
+  console.log(`  [llms] llms.txt (${(index.length / 1024).toFixed(1)} KB) + llms-full.txt (${(full.length / 1024).toFixed(1)} KB) from ${data.products.length} products`);
+  const done = await prerender(routesFrom(data));
+  writeSitemap(done);
+  console.log(`  [prerender] ${done.length} static pages + sitemap.xml`);
 }
 // Non-fatal: an SSG hiccup must never block a deploy (the working router stays).
 main().then(() => process.exit(0)).catch((e) => { console.error('[prerender] non-fatal:', e && e.message); process.exit(0); });

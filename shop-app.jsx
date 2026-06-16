@@ -1,10 +1,10 @@
 // shop-app.jsx — ShopApp: orchestrates state and renders the current screen.
 // Mobile website layout (header + footer + content), no app-style bottom bar.
 
-function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScreen = 'home', welcomeTrigger = 0, frameless = false }) {
+function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScreen = 'home', startParams = {}, welcomeTrigger = 0, frameless = false }) {
   const theme = THEMES[themeId];
   const [screen, setScreen] = React.useState(startScreen);
-  const [params, setParams] = React.useState({});
+  const [params, setParams] = React.useState(startParams);
   const [cart, setCart] = React.useState([{ id: 'hush-01', qty: 1 }, { id: 'halo', qty: 2 }]);
   const [orders, setOrders] = React.useState([]);
   const [lastOrder, setLastOrder] = React.useState(null);
@@ -38,7 +38,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   }, [welcomeTrigger]);
 
   React.useEffect(() => {
-    setScreen(startScreen);
+    setScreen(startScreen); setParams(startParams || {});
   }, [startScreen]);
 
   const nav = (s, p) => {
@@ -70,7 +70,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   // Inject site-wide structured data once + set initial page SEO.
   React.useEffect(() => {
     if (typeof injectGlobalSEO === 'function') injectGlobalSEO();
-    if (typeof updateSEO === 'function') updateSEO('home', {}, 'lv');
+    if (typeof updateSEO === 'function') updateSEO(startScreen, startParams || {}, 'lv');
     if (window.SHHH_TRACK) window.SHHH_TRACK.pageView(startScreen || 'home');
   }, []);
 

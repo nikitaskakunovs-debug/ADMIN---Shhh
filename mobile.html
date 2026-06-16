@@ -424,10 +424,14 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
   const showStage = new URLSearchParams(location.search).get('stage') === '1';
   if (!showStage) document.body.classList.add('shhh-live');
   const t = TWEAK_DEFAULTS;
+  // Pre-rendered pages bake window.__shhhRoute so the app boots on the right
+  // screen (product/category/content); defaults to home for normal visits.
+  const route = (typeof window !== 'undefined' && window.__shhhRoute) || {};
   const app = showStage ? <Stage /> : (
     <ShopApp frameless themeId="velvet"
       cardStyle={t.cardStyle} heroLayout={t.heroLayout}
-      checkoutFlow={t.checkoutFlow} tone={t.tone} startScreen="home" />
+      checkoutFlow={t.checkoutFlow} tone={t.tone}
+      startScreen={route.screen || 'home'} startParams={route.params || {}} />
   );
   root.render(<ShhhErrorBoundary>{app}</ShhhErrorBoundary>);
 })();
