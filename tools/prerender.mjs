@@ -68,11 +68,18 @@ function deviceLoader(ver) {
 function assemble(template, r, ver, route) {
   let html = template;
   // 0) deep routes live in a subdir (/produkts/{id}/) so their relative assets
-  //    (vendor/, dist/, favicon) must resolve to the site root — a relative
-  //    <base> does that on both the github.io subpath and a future root domain.
+  //    (vendor/, dist/, favicon) must resolve to the site root. A *relative*
+  //    <base href="../"> breaks when the URL is hit WITHOUT a trailing slash
+  //    (/produkts/x), because '../' then resolves one level too high and the
+  //    bundle 404s. Compute the root at runtime instead by stripping this
+  //    route's known segment count off location.pathname — identical with or
+  //    without a trailing slash, on a github.io subpath or a root domain.
   if (route.r) {
-    const prefix = '../'.repeat(route.path.split('/').length);
-    html = html.replace('<head>', `<head>\n<base href="${prefix}">`);
+    const seg = route.path.split('/').length;
+    const baseScript = '<script>(function(){var n=' + seg +
+      ',p=location.pathname.split("/").filter(Boolean),b="/"+p.slice(0,Math.max(0,p.length-n)).join("/");' +
+      'b=b.length>1?b+"/":"/";document.write(\'<base href="\'+b+\'">\');window.__shhhBase=b;})();</script>';
+    html = html.replace('<!-- Fonts -->', baseScript + '\n<!-- Fonts -->');
   }
   // 1) route-specific <head> (title/description/canonical) + JSON-LD
   if (r.title) html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(r.title)}</title>`);
@@ -82,9 +89,12 @@ function assemble(template, r, ver, route) {
   // URL is shareable + survives refresh, but must not be indexed.
   if (route.noindex) html = html.replace(/<meta name="robots" content="[^"]*">/, '<meta name="robots" content="noindex,follow">');
   html = html.replace('</head>', r.jsonld.join('\n') + '\n</head>');
-  // 2) drop bundle preload; home device-routes desktop/mobile, deep routes bake
-  //    the route + load mobile so the right screen renders for users too.
-  html = html.replace(/<link rel="preload" as="script" href="dist\/[^"]*">\s*/g, '');
+  // 2) drop the script preloads. The deviceLoader re-adds react/react-dom + the
+  //    right device bundle itself, so on deep routes these preloads are not only
+  //    redundant but harmful: the browser's preload scanner resolves their
+  //    relative href against the page URL *before* the runtime <base> is set,
+  //    firing 404s at /produkts/x/vendor/… . Strip vendor + dist preloads.
+  html = html.replace(/<link rel="preload" as="script" href="(dist|vendor)\/[^"]*">\s*/g, '');
   // Every page device-routes (desktop/mobile bundle) and bakes the route, so a
   // desktop visitor landing on a deep URL gets the desktop layout, not mobile.
   const routeScript = route.r ? `<script>window.__shhhRoute=${JSON.stringify(route.r)};</script>\n` : '';
