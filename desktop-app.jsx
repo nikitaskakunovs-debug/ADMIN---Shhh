@@ -25,8 +25,11 @@ function DAppInner() {
   // Pre-rendered deep pages bake window.__shhhRoute; boot on that screen so a
   // desktop visitor landing on /produkts/... gets the product, not home.
   // (The route uses the mobile screen name 'product'; desktop calls it 'pdp'.)
-  const _route = (typeof window !== 'undefined' && window.__shhhRoute) || {};
-  const [screen, setScreen] = React.useState(_route.screen === 'product' ? 'pdp' : (_route.screen || 'home'));
+  // The shared route map uses the mobile screen names ('product', 'category');
+  // desktop calls them 'pdp' and 'browse'. Normalise on every boot/restore.
+  const dscreen = (s) => (s === 'product' ? 'pdp' : s === 'category' ? 'browse' : (s || 'home'));
+  const _route = (typeof window !== 'undefined' && window.__shhhRoute) || (window.routeFromUrl && window.routeFromUrl()) || {};
+  const [screen, setScreen] = React.useState(dscreen(_route.screen));
   const [params, setParams] = React.useState(_route.params || {});
   const [cart, setCart] = React.useState([{ id: 'hush-01', qty: 1 }, { id: 'halo', qty: 2 }]);
   const [orders, setOrders] = React.useState([]);
@@ -76,7 +79,7 @@ function DAppInner() {
     const onPop = (e) => {
       const r = (e && e.state && e.state.screen) ? e.state : (window.routeFromUrl && window.routeFromUrl());
       if (!r) return;
-      setScreen(r.screen === 'product' ? 'pdp' : r.screen);
+      setScreen(dscreen(r.screen));
       setParams(r.params || {});
       if (typeof updateSEO === 'function') { try { updateSEO(r.screen, r.params || {}, window.__shhhLang || 'lv'); } catch (e) {} }
     };

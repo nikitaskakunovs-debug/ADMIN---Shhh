@@ -17,6 +17,10 @@ const SEO_MAP = {
   confirmation:{ path: '/pasutijums',       title: 'Pasūtījums apstiprināts', desc: '', noindex: true },
   account:     { path: '/konts',            title: 'Mans konts', desc: '', noindex: true },
   packaging:   { path: '/ka-tas-pienak',    title: 'Kā tas pienāk — diskrēta piegāde', desc: 'Vienkārša kaste bez logo, anonīms sūtītājs "NL Trading Co", piegāde uz pakomātu vai durvīm. Uzzini, kā saglabājam tavu privātumu.' },
+  sale:        { path: '/akcijas',          title: 'Akcijas — atlaides intīmprecēm', desc: 'Pašreizējās akcijas un atlaides: vibratori, stimulatori, lubrikanti un komplekti par pazeminātām cenām. Diskrēta piegāde, anonīms maksājums.' },
+  giftcard:    { path: '/davanu-karte',     title: 'Dāvanu karte', desc: 'Shhh dāvanu karte — diskrēta dāvana, kuru saņēmējs izvēlas pats. Nosūtām e-pastā, bez norādes uz saturu. Derīga visam sortimentam.' },
+  occasion:    { path: '/iedvesma',         title: '', desc: '' }, // filled per-key
+  search:      { path: '/meklet',           title: 'Meklēšana', desc: 'Meklē intīmpreces visā Shhh sortimentā.', noindex: true },
   legal:       { path: '/juridiski',        title: 'Juridiskā informācija', desc: 'Lietošanas noteikumi, privātuma politika, sīkfaili un atgriešanas.' },
   content:     { path: '/info',             title: '', desc: '' }, // filled per-key
   catland:     { path: '/kategorija',       title: '', desc: '' }, // filled per-cat
@@ -106,7 +110,7 @@ function updateSEO(screen, params, lang) {
   // router uses 'pdp'/'browse'; without this the product/category schema, title
   // and canonical never fired on real navigation.
   if (screen === 'pdp') screen = 'product';
-  else if (screen === 'browse' || screen === 'search') screen = 'category';
+  else if (screen === 'browse') screen = 'category';
   const base = SEO_MAP[screen] || SEO_MAP.home;
   let title = base.title;
   let desc = base.desc;
@@ -137,6 +141,14 @@ function updateSEO(screen, params, lang) {
       path = '/kategorija/' + (params.cat || '');
       crumb = cl.title;
     }
+  } else if (screen === 'occasion') {
+    const oc = (window.OCCASIONS || {})[params?.key];
+    if (oc) {
+      title = oc.title + ' — iedvesma un idejas';
+      desc = (oc.sub || oc.intro || '').slice(0, 158);
+    }
+    path = '/iedvesma/' + (params?.key || 'gift');
+    crumb = oc ? oc.title : null;
   } else if (screen === 'legal') {
     path = '/juridiski/' + (params?.key || 'terms');
   }
@@ -323,6 +335,19 @@ function updateSEO(screen, params, lang) {
 // transient screens (cart/checkout/…) leave it, so a refresh always lands on a
 // real page. Path scheme matches tools/prerender.mjs.
 // ─────────────────────────────────────────────────────────────
+// Standalone screens with a single, fixed URL (no per-record param). Both the
+// desktop and mobile screen names map to the same slug so a shared link opens
+// the right place on either device. Kept in sync with SEO_MAP + prerender.
+const SCREEN_SLUG = {
+  category: 'veikals', browse: 'veikals',   // shop-all listing
+  search: 'meklet',
+  sale: 'akcijas',
+  giftcard: 'davanu-karte',
+  packaging: 'ka-tas-pienak',
+  account: 'konts',
+};
+const SLUG_SCREEN = { veikals: 'category', meklet: 'search', akcijas: 'sale', 'davanu-karte': 'giftcard', 'ka-tas-pienak': 'packaging', konts: 'account' };
+
 function routeToPath(screen, params) {
   params = params || {};
   if (screen === 'home') return '';
@@ -330,18 +355,22 @@ function routeToPath(screen, params) {
   if (screen === 'catland') return params.cat ? 'kategorija/' + params.cat : null;
   if (screen === 'content') return params.key ? 'info/' + params.key : null;
   if (screen === 'legal') return params.key ? 'juridiski/' + params.key : null;
-  return null; // transient screen — don't touch the URL
+  if (screen === 'occasion') return 'iedvesma/' + (params.key || 'gift');
+  if (SCREEN_SLUG[screen]) return SCREEN_SLUG[screen];
+  return null; // transient screen (cart/checkout/…) — don't touch the URL
 }
 function pathToRoute(path) {
   path = (path || '').replace(/^\/+|\/+$/g, '').replace(/\/index\.html$/, '');
   if (!path) return { screen: 'home', params: {} };
-  const m = path.match(/^(produkts|kategorija|info|juridiski)\/(.+?)\/?$/);
+  if (SLUG_SCREEN[path]) return { screen: SLUG_SCREEN[path], params: {} };
+  const m = path.match(/^(produkts|kategorija|info|juridiski|iedvesma)\/(.+?)\/?$/);
   if (!m) return null;
   const seg = m[2];
   if (m[1] === 'produkts') return { screen: 'product', params: { id: seg } };
   if (m[1] === 'kategorija') return { screen: 'catland', params: { cat: seg } };
   if (m[1] === 'info') return { screen: 'content', params: { key: seg } };
   if (m[1] === 'juridiski') return { screen: 'legal', params: { key: seg } };
+  if (m[1] === 'iedvesma') return { screen: 'occasion', params: { key: seg } };
   return null;
 }
 // Deployment base path (e.g. '/' or '/ADMIN---Shhh/') derived once from where we

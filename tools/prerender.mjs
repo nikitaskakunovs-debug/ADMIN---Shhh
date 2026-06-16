@@ -78,6 +78,9 @@ function assemble(template, r, ver, route) {
   if (r.title) html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(r.title)}</title>`);
   if (r.desc) html = html.replace(/(<meta name="description" content=")[^"]*(">)/, `$1${esc(r.desc)}$2`);
   if (r.canonical) html = html.replace(/(<link rel="canonical" href=")[^"]*(">)/, `$1${esc(r.canonical)}$2`);
+  // Interactive/private screens (search results, account) get a real file so the
+  // URL is shareable + survives refresh, but must not be indexed.
+  if (route.noindex) html = html.replace(/<meta name="robots" content="[^"]*">/, '<meta name="robots" content="noindex,follow">');
   html = html.replace('</head>', r.jsonld.join('\n') + '\n</head>');
   // 2) drop bundle preload; home device-routes desktop/mobile, deep routes bake
   //    the route + load mobile so the right screen renders for users too.
@@ -112,6 +115,7 @@ async function collectData(page) {
     landings: w.CATEGORY_LANDINGS || {},
     content: w.CONTENT_PAGES || {},
     legal: w.LEGAL_PAGES || {},
+    occasions: w.OCCASIONS || {},
     brandNames: Array.isArray(w.BRAND_NAMES) ? w.BRAND_NAMES : [],
   };
   dom.window.close();
@@ -183,18 +187,21 @@ async function prerender(routes) {
     let r;
     try { r = await render('mobile', route); }
     catch (e) { console.log(`  [prerender] error ${route.label}: ${(e && e.message || '').slice(0, 60)}`); continue; }
-    if (!r || r.textLen < 300) continue; // thin/empty page — leave it client-rendered
+    if (!r) continue;
+    // Thin pages stay client-rendered — unless `keep` (an interactive screen we
+    // still want a real file for, so its shareable URL survives a refresh).
+    if (r.textLen < 300 && !route.keep) continue;
     const file = path.join(OUT, route.out);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, assemble(template, r, ver, route));
-    done.push({ path: route.path, priority: route.priority || 0.6 });
+    done.push({ path: route.path, priority: route.priority || 0.6, noindex: !!route.noindex });
   }
   return done;
 }
 
 function writeSitemap(routes) {
   const today = new Date().toISOString().slice(0, 10);
-  const urls = routes.map((r) =>
+  const urls = routes.filter((r) => !r.noindex).map((r) =>
     `  <url>\n    <loc>${SITE_URL}/${r.path}</loc>\n    <lastmod>${today}</lastmod>\n` +
     `    <changefreq>weekly</changefreq>\n    <priority>${Number(r.priority).toFixed(1)}</priority>\n  </url>`).join('\n');
   fs.writeFileSync(path.join(OUT, 'sitemap.xml'),
@@ -215,6 +222,18 @@ function routesFrom(data) {
     routes.push({ label: 'info ' + k, path: 'info/' + k, out: `info/${k}/index.html`, r: { screen: 'content', params: { key: k } }, priority: 0.6 });
   for (const k of Object.keys(data.legal))
     routes.push({ label: 'legal ' + k, path: 'juridiski/' + k, out: `juridiski/${k}/index.html`, r: { screen: 'legal', params: { key: k } }, priority: 0.4 });
+  // Standalone listing / info screens — real shareable URLs (parity with the
+  // product/category/guide pages). Slugs match shop-seo.jsx's SCREEN_SLUG.
+  routes.push({ label: 'shop-all',  path: 'veikals',       out: 'veikals/index.html',       r: { screen: 'category',  params: {} }, priority: 0.9 });
+  routes.push({ label: 'sale',      path: 'akcijas',       out: 'akcijas/index.html',       r: { screen: 'sale',      params: {} }, priority: 0.7 });
+  routes.push({ label: 'giftcard',  path: 'davanu-karte',  out: 'davanu-karte/index.html',  r: { screen: 'giftcard',  params: {} }, priority: 0.6 });
+  routes.push({ label: 'packaging', path: 'ka-tas-pienak', out: 'ka-tas-pienak/index.html', r: { screen: 'packaging', params: {} }, priority: 0.6 });
+  for (const k of Object.keys(data.occasions))
+    routes.push({ label: 'occasion ' + k, path: 'iedvesma/' + k, out: `iedvesma/${k}/index.html`, r: { screen: 'occasion', params: { key: k } }, priority: 0.5 });
+  // Interactive/private screens: a real file (so the URL is shareable + survives
+  // a refresh) but noindex + kept even when thin.
+  routes.push({ label: 'search',  path: 'meklet', out: 'meklet/index.html', r: { screen: 'search',  params: {} }, priority: 0.3, noindex: true, keep: true });
+  routes.push({ label: 'account', path: 'konts',  out: 'konts/index.html',  r: { screen: 'account', params: {} }, priority: 0.2, noindex: true, keep: true });
   return routes;
 }
 

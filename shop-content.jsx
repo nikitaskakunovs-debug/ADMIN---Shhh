@@ -1270,7 +1270,7 @@ if (typeof window !== 'undefined' && window.addEventListener) window.addEventLis
 
 Object.assign(window, { OrderLookupScreen });
 
-Object.assign(window, { CONTENT_PAGES, JOURNAL_INDEX, ContentScreen, HowItArrivesScreen, BoxLabelPreview, NotFoundScreen, CategoryLandingScreen, ReviewForm, GdprForm, GiftCardScreen, SaleScreen, OccasionScreen, FaqTabs });
+Object.assign(window, { CONTENT_PAGES, JOURNAL_INDEX, ContentScreen, HowItArrivesScreen, BoxLabelPreview, NotFoundScreen, CategoryLandingScreen, ReviewForm, GdprForm, GiftCardScreen, SaleScreen, OccasionScreen, OCCASIONS, FaqTabs });
 
 // ─────────────────────────────────────────────────────────────
 // FaqTabs — full FAQ page with All + per-category tabs
