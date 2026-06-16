@@ -168,6 +168,16 @@ function TopNav({ nav, current, cartCount, favCount, openWelcome }) {
   const t = (typeof useT === 'function') ? useT() : (k, fb) => fb || k;
   const [megaOpen, setMegaOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
+  // Responsive: the full nav (wordmark + 5 links + 240px search + lang + 4 icons)
+  // is ~1180px wide and used to overflow on tablets / narrow windows. Collapse it.
+  const [vw, setVw] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  React.useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const compact = vw < 1200; // hide secondary links + shrink search
+  const tight = vw < 760;    // also drop the search field
   const megaRef = React.useRef(null);
   React.useEffect(() => {
     if (!megaOpen) return;
@@ -201,7 +211,7 @@ function TopNav({ nav, current, cartCount, favCount, openWelcome }) {
       <Container>
         <div style={{
           height: DT.navHeight, display: 'flex',
-          alignItems: 'center', gap: 28,
+          alignItems: 'center', gap: compact ? 16 : 28,
         }}>
           <DWordmark size={28} onClick={() => nav('home')} />
           <nav style={{ display: 'flex', gap: 22, marginLeft: 8, alignItems: 'center' }}>
@@ -247,16 +257,20 @@ function TopNav({ nav, current, cartCount, favCount, openWelcome }) {
                 </div>
               )}
             </div>
+            {!compact && (<>
             <button onClick={() => nav('brands')} style={linkStyle(current === 'brands')}>{t('nav.brands', 'Zīmoli')}</button>
             <button onClick={() => nav('sale')} style={{ ...linkStyle(current === 'sale'), color: current === 'sale' ? DT.ink : DT.accent }}>Akcijas 🔥</button>
             <button onClick={() => nav('giftcard')} style={linkStyle(current === 'giftcard')}>Dāvanu karte 🎁</button>
             <button onClick={openWelcome} style={linkStyle(false)}>💘 {t('nav.match', 'Match')}</button>
+            </>)}
           </nav>
           <div style={{ flex: 1 }} />
+          {!tight && (
           <form onSubmit={submitSearch} style={{
             height: 40, padding: '0 6px 0 14px', borderRadius: 999,
             background: DT.surfaceAlt,
-            display: 'inline-flex', alignItems: 'center', gap: 8, width: 240,
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            width: compact ? 190 : 240, minWidth: 0, flexShrink: 1,
           }}>
             <DIcon name="search" size={16} color={DT.inkSoft} />
             <input value={q} onChange={e => setQ(e.target.value)}
@@ -266,6 +280,7 @@ function TopNav({ nav, current, cartCount, favCount, openWelcome }) {
               fontFamily: DT.body, fontSize: 13, color: DT.ink, minWidth: 0,
             }} />
           </form>
+          )}
           <DLangSwitcher />
           <IconBtn onClick={() => nav('account', { tab: 'favourites' })} badge={favCount}
             label={t('nav.favourites', 'Vēlmes') + (favCount ? ` (${favCount})` : '')}>
