@@ -98,11 +98,30 @@ Gotchas that cost real time here (check them every time):
 
 ### 2b. pushState (real shareable URLs + back/forward)
 
-Sync the URL on navigation so deep links are shareable and history works. Keep it scoped to
-**indexable screens** (which have pre-rendered files, so refresh always hits a real page);
-leave transient screens (cart/checkout) on the last URL. **Detect the base path at runtime**
-(strip the current route/filename from `location.pathname`) so it works on `/repo/` subpaths and
-root domains. Validate with a subpath server, not just `/`.
+Sync the URL on navigation so deep links are shareable and history works. **Detect the base path
+at runtime** (strip the current route/filename from `location.pathname`) so it works on `/repo/`
+subpaths and root domains. Validate with a subpath server, not just `/`.
+
+**Cover the WHOLE site, not just product/category/article pages.** It's easy to wire up deep
+links for the obvious page types and silently leave gaps — the *shop-all* listing, *sale*,
+*gift card*, *packaging/"how it ships"*, *occasion/collection*, *search*, *account*. If
+`routeToPath(screen)` returns `null` for a navigable screen, that screen has **no shareable URL,
+no pre-rendered file, and (if it falls back to the home SEO entry) the homepage's title +
+canonical**. Audit every screen the app can navigate to and classify each:
+- **Indexable content** (listings, collections, info) → give it a real slug, pre-render it, add
+  it to the sitemap. Keep one `SCREEN_SLUG`/`SLUG_SCREEN` map as the single source so the router,
+  SEO map, and pre-render route list agree.
+- **Interactive but shareable** (search, account) → still give it a URL and a **real pre-rendered
+  file so a refresh/direct-hit doesn't 404**, but mark it **`noindex`** and **exclude it from the
+  sitemap**. Pre-render it even if it's thin (a `keep` flag to bypass the min-text guard).
+- **Genuinely transient** (cart, checkout, pending, confirmation, invoice) → leave the URL alone;
+  a refresh should land on a real page, not a half-state.
+
+**Device-name skew:** if desktop and mobile use different internal names for the same screen
+(`browse` vs `category`, `pdp` vs `product`), normalize them **in one place** at boot, on
+`popstate`, and before `pushState` — otherwise a shared link opens the wrong screen (or nothing)
+on the other device. Confirm both device bundles can actually *render* every deep-linked screen
+(a mobile-only screen reached on desktop must have a desktop equivalent or a graceful fallback).
 
 ### 2c. robots / sitemap / llms
 
@@ -354,6 +373,7 @@ small per-route head tags and the crawlable-link/lang/viewport hygiene above.
 - [ ] A11y: button-name/label/contrast/target-size/lang addressed; harness re-run clean.
 - [ ] Code split into small per-concern files; one route map drives links + sitemap + pushState.
 - [ ] Internal links are real crawlable `<a href>`; breadcrumbs + category/related links; no orphans.
+- [ ] EVERY navigable screen audited for deep links: content pre-rendered + in sitemap; interactive (search/account) get noindex pre-rendered files; only cart/checkout/etc. left transient; device name-skew normalized in one place.
 - [ ] Product model maps cleanly to schema/PDP/llms (id, code/gtin, brand, price, stock, specs, image).
 - [ ] All four Lighthouse categories checked: Best Practices (HTTPS, no console errors, img dims) + SEO (unique title/desc per route, viewport, lang, canonical, crawlable links).
 - [ ] Business facts real or explicitly flagged to the owner; payment provider noted.
