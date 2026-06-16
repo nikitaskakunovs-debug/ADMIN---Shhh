@@ -12,6 +12,10 @@ description: >
   setup, cookie consent, pre-rendering/SSR/SSG, Core Web Vitals / PageSpeed,
   accessibility audits, or launch-readiness for a website — especially a
   JavaScript-rendered one on static hosting (GitHub Pages, S3, Netlify static).
+  Also covers code/file structure for a buildable SPA, internal-link
+  architecture, the product data model that feeds schema/PDP, and getting all
+  four Lighthouse categories (Performance, Accessibility, Best Practices, SEO)
+  to 100.
 ---
 
 # Ecommerce / marketing-site SEO + launch playbook
@@ -210,7 +214,127 @@ a total desktop crash, a 343px tablet overflow, the SSG base-path bug, and the s
 - Two launch items that are *not* code and must be flagged: **DNS for the real domain** and a **real
   payment provider** (a `Math.random()` "success" checkout takes no money).
 
-## 9. Build / deploy shape that worked
+## 9. Code structure (a SPA you can pre-render and code-split)
+
+The layout that made build-time compilation, code-splitting, and SSG possible
+without a framework:
+
+- **Many small single-responsibility source files, not one bundle.** Source is
+  split by concern and by device: shared `shop-*` modules (`shop-data`,
+  `shop-i18n`, `shop-seo`, `shop-chrome`, `shop-consent`, `shop-checkout-bits`,
+  `shop-app`, error boundary), `desktop-*` (app, ui, `desktop-screens-1..4`),
+  and the HTML shells (`index.html` router, `desktop.html`, `mobile.html`). Each
+  is loaded as its own `<script type="text/babel">` in dev. This is what lets the
+  build compile **each file separately** (mirrors the browser) and split a small
+  **core** from a lazy **rest** bundle by listing files in each set.
+- **Globals as the module system, deliberately.** No `import`/`export` in the app
+  source — components and data attach to `window` (or are top-level in a shared
+  scope) so any file can use them. Trade-off: name collisions. The build dodges
+  them because per-`<script>` Babel makes top-level `const`/`let` into effectively
+  per-file scope (`var`-like). **One concatenated transpile fails** with
+  "X already declared"; compile per file then concatenate.
+- **Keep render and data separate.** `shop-data.jsx` is pure data (the catalog),
+  `shop-seo.jsx` is pure SEO/schema/routing, screens are pure render. The
+  pre-renderer reads `window.PRODUCTS`/categories/content straight off the booted
+  bundle — only possible because data isn't entangled with components.
+- **Centralized config** (`tools/site.config.mjs`): `SITE_URL` + business identity
+  in one place, imported by build/prerender. One edit propagates to schema,
+  footer, sitemap, llms feeds.
+- **Tooling lives in `tools/*.mjs`, deploy in CI.** `build.mjs` (per-file Babel,
+  domain rewrite, core/rest split, prod-React HTML), `prerender.mjs` (jsdom SSG +
+  sitemap + llms), `smoke.mjs` (jsdom deploy gate), `site.config.mjs`. The dev
+  workflow stays "no build step" because **CI** runs the build.
+- **Device split at the shell, shared logic underneath.** `index.html` detects the
+  device and routes to `mobile.html`/`desktop.html`; both reuse the `shop-*` core.
+  SSG renders the right device bundle per page and bakes `window.__shhhRoute`.
+
+## 10. Internal link & URL structure
+
+Crawlers and AI engines weight a clean, shallow, **real-file** URL graph. What we shipped:
+
+- **Flat, human-readable, localized paths, one real file each:** `/produkts/<id>`,
+  `/kategorija/<cat>`, `/info/<key>`, `/juridiski/<key>` (+ home). Localized slugs
+  ("produkts", "kategorija") are fine — keep them stable and consistent. One canonical
+  path per entity; pick trailing-slash policy and stick to it.
+- **One route map, used everywhere.** A single `routeToPath(screen, params)` /
+  `pathToRoute(path)` pair drives the sitemap, the pre-render route list, pushState,
+  and in-app `<a href>`s — so links, canonicals, and emitted files can't drift apart.
+- **Real `<a href>` for every internal link**, not `onClick`-only `<div>`s. A handler
+  intercepts for SPA nav (pushState), but the href makes the link **crawlable** and
+  middle-click/SEO-visible. Lighthouse SEO flags `crawlable-anchors` otherwise.
+- **Deliberate internal linking, not just nav:** breadcrumbs on every PDP/category
+  (with matching `BreadcrumbList` schema), category → product links, related/"more from
+  brand" links, footer links to content/legal hubs. This distributes link equity and
+  gives crawlers paths to every page. Avoid orphan pages (in the sitemap but linked
+  from nowhere).
+- **Canonical + hreflang discipline:** absolute canonical to `SITE_URL` on every page;
+  if/when you add languages, pair them with `hreflang` (and a self-referential
+  canonical per locale). No two URLs serving the same content without a canonical.
+- **Sitemap mirrors the real graph** — generated from emitted files, not a hand list,
+  so it can't list 404s or miss pages.
+
+## 11. Product structure (the data model that feeds schema + PDP)
+
+The catalog object is the source of truth for the PDP, Product schema, llms feed,
+and category pages — design it so each field maps cleanly to one of those:
+
+- **Stable `id`/slug** → the URL (`/produkts/<id>`) and schema `@id`. Never reuse or
+  renumber; a changed product URL loses its ranking.
+- **`code`** (real barcode) → schema `gtin8/12/13/14` (validate `/^\d{8,14}$/`). Real
+  GTIN is a strong merchant signal; omit rather than fake it.
+- **`brand`** (real manufacturer) → `brand.name`. Never a placeholder like the shop name.
+- **`price` + currency** → `Offer.price`/`priceCurrency`; plus `priceValidUntil`,
+  `itemCondition`, `hasMerchantReturnPolicy`, `shippingDetails` to qualify for rich results.
+- **`stock`** ('in'/'out'/count) → `availability` (`InStock`/`OutOfStock`) and the PDP
+  buy state — one field drives both so they can't contradict.
+- **`rating`/`reviewCount`** → `aggregateRating` **only when real reviews render on the
+  page**; omit entirely otherwise (faking it is a policy violation).
+- **`name`, `description`, `specs`/attributes** (length, material…) → PDP copy, schema
+  `description`/`additionalProperty`, and the llms-full feed. Rich, real specs are what
+  AI engines quote.
+- **`category`** → the category/`CollectionPage` it lists under, breadcrumbs, and related links.
+- **`image`** (real asset, stable path) → `Offer.image`/og-image; ensure the file exists
+  (a 404 image kills the rich result and the share card).
+- **Curate, don't auto-explode.** A page per record only when it has real content — don't
+  pre-render a page per brand for 260 brands with no products (§2a). Thin pages dilute and
+  waste crawl budget.
+
+## 12. Getting all four Lighthouse categories to 100
+
+Lighthouse scores **Performance, Accessibility, Best Practices, SEO** separately —
+"100" means all four. Performance is §5, Accessibility is §6. The other two are
+mostly checklist items that are cheap once you know them:
+
+**Best Practices (100):**
+- Serve over **HTTPS** (Pages/Netlify/S3+CF give it free); no mixed content — every
+  asset/script/font over `https://`.
+- **Zero console errors** at load (`browser-errors`): the validation crawl catching
+  `pageerror` (§7) is exactly this — the desktop `t is not defined` crash tanked it.
+- **Images with explicit `width`/`height`** (or CSS aspect-ratio) so they don't cause
+  layout shift and pass `image-aspect-ratio`/`image-size-responsive`.
+- **No deprecated APIs**, no `document.write`, set a strong `Referrer-Policy`/CSP where
+  the host allows headers; don't request geolocation/notifications on load.
+- Source maps and **no leftover third-party junk** (old analytics, unused libs) — also a
+  perf and privacy win (§4).
+
+**SEO (100):**
+- **`<title>` + meta `description`** present and **unique per page** — baked per route by
+  the pre-renderer, not one static title for the whole SPA.
+- **`<meta name="viewport">`** with `width=device-width` (also gates mobile usability).
+- **`<html lang>`** set and correct (§6), updated on language switch.
+- **Crawlable `<a href>`** links (§10) — `crawlable-anchors`.
+- **`robots.txt` valid** and not accidentally blocking indexing; **no stray `noindex`**
+  on pages you want indexed (`is-crawlable`).
+- **Tap targets / font legibility** on mobile (overlaps §6 target-size).
+- **Canonical present and valid** (`canonical`) — absolute, to `SITE_URL`.
+- Document has indexable content (ties back to §1 — a no-JS empty `#root` fails SEO
+  audits too; pre-rendering fixes Performance *and* SEO *and* AEO at once).
+
+The single highest-leverage move for the SEO category **and** Performance **and** AI
+search is the same one: **pre-render** (§2a). After it, the remaining points are the
+small per-route head tags and the crawlable-link/lang/viewport hygiene above.
+
+## 13. Build / deploy shape that worked
 
 - `build → prerender → smoke(gate) → publish` in CI; a failed smoke **blocks** the deploy (a broken
   build can't reach prod); a failed prerender is **non-fatal** (degrades to the client-rendered page).
@@ -218,7 +342,7 @@ a total desktop crash, a 343px tablet overflow, the SSG base-path bug, and the s
   identifier in commits/artifacts.
 - Cache-bust local script includes with `?v=<timestamp>` so Pages' short cache doesn't serve stale JS.
 
-## 10. Pre-launch checklist
+## 14. Pre-launch checklist
 
 - [ ] No-JS fetch of home + a product shows real content + JSON-LD (§1).
 - [ ] One `SITE_URL`; canonicals/sitemap/llms/schema all use it; DNS connected.
@@ -228,4 +352,8 @@ a total desktop crash, a 343px tablet overflow, the SSG base-path bug, and the s
 - [ ] Tracking consent-gated, no PII, purchase-only-on-paid+deduped, no leftover agency IDs.
 - [ ] Babel-free prod bundle; code-split; fonts non-blocking; honest CWV expectations.
 - [ ] A11y: button-name/label/contrast/target-size/lang addressed; harness re-run clean.
+- [ ] Code split into small per-concern files; one route map drives links + sitemap + pushState.
+- [ ] Internal links are real crawlable `<a href>`; breadcrumbs + category/related links; no orphans.
+- [ ] Product model maps cleanly to schema/PDP/llms (id, code/gtin, brand, price, stock, specs, image).
+- [ ] All four Lighthouse categories checked: Best Practices (HTTPS, no console errors, img dims) + SEO (unique title/desc per route, viewport, lang, canonical, crawlable links).
 - [ ] Business facts real or explicitly flagged to the owner; payment provider noted.
