@@ -64,16 +64,16 @@ function deviceLoader(ver) {
     `a((m?'dist/mobile.bundle.js':'dist/desktop.bundle.js')+'?v=${ver}');})();</script>`;
 }
 
-// Deep routes load only the mobile bundle (which reads the baked __shhhRoute).
-function mobileLoader(ver) {
-  return `<script defer src="vendor/react.production.min.js"></script>\n` +
-    `<script defer src="vendor/react-dom.production.min.js"></script>\n` +
-    `<script defer src="dist/mobile.bundle.js?v=${ver}"></script>`;
-}
-
 // Assemble a crawlable static file from the mobile template + rendered fragment.
 function assemble(template, r, ver, route) {
   let html = template;
+  // 0) deep routes live in a subdir (/produkts/{id}/) so their relative assets
+  //    (vendor/, dist/, favicon) must resolve to the site root — a relative
+  //    <base> does that on both the github.io subpath and a future root domain.
+  if (route.r) {
+    const prefix = '../'.repeat(route.path.split('/').length);
+    html = html.replace('<head>', `<head>\n<base href="${prefix}">`);
+  }
   // 1) route-specific <head> (title/description/canonical) + JSON-LD
   if (r.title) html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(r.title)}</title>`);
   if (r.desc) html = html.replace(/(<meta name="description" content=")[^"]*(">)/, `$1${esc(r.desc)}$2`);
@@ -82,9 +82,10 @@ function assemble(template, r, ver, route) {
   // 2) drop bundle preload; home device-routes desktop/mobile, deep routes bake
   //    the route + load mobile so the right screen renders for users too.
   html = html.replace(/<link rel="preload" as="script" href="dist\/[^"]*">\s*/g, '');
+  // Every page device-routes (desktop/mobile bundle) and bakes the route, so a
+  // desktop visitor landing on a deep URL gets the desktop layout, not mobile.
   const routeScript = route.r ? `<script>window.__shhhRoute=${JSON.stringify(route.r)};</script>\n` : '';
-  const loader = route.r ? mobileLoader(ver) : deviceLoader(ver);
-  html = html.replace(/<!-- Precompiled[\s\S]*?<\/script>\s*<\/body>/, routeScript + loader + '\n</body>');
+  html = html.replace(/<!-- Precompiled[\s\S]*?<\/script>\s*<\/body>/, routeScript + deviceLoader(ver) + '\n</body>');
   // 3) bake the rendered content + body class
   if (r.bodyClass) html = html.replace('<body>', `<body class="${esc(r.bodyClass)}">`);
   html = html.replace('<div id="root"></div>', `<div id="root">${r.rootHTML}</div>`);

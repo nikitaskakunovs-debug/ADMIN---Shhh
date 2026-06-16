@@ -22,8 +22,12 @@ function DApp() {
 }
 
 function DAppInner() {
-  const [screen, setScreen] = React.useState('home');
-  const [params, setParams] = React.useState({});
+  // Pre-rendered deep pages bake window.__shhhRoute; boot on that screen so a
+  // desktop visitor landing on /produkts/... gets the product, not home.
+  // (The route uses the mobile screen name 'product'; desktop calls it 'pdp'.)
+  const _route = (typeof window !== 'undefined' && window.__shhhRoute) || {};
+  const [screen, setScreen] = React.useState(_route.screen === 'product' ? 'pdp' : (_route.screen || 'home'));
+  const [params, setParams] = React.useState(_route.params || {});
   const [cart, setCart] = React.useState([{ id: 'hush-01', qty: 1 }, { id: 'halo', qty: 2 }]);
   const [orders, setOrders] = React.useState([]);
   const [lastOrder, setLastOrder] = React.useState(null);
@@ -75,7 +79,7 @@ function DAppInner() {
       setScreen('confirmation');
     };
     if (typeof injectGlobalSEO === 'function') injectGlobalSEO();
-    if (typeof updateSEO === 'function') updateSEO('home', {}, 'lv');
+    if (typeof updateSEO === 'function') updateSEO(screen, params, 'lv');
     if (window.SHHH_TRACK) window.SHHH_TRACK.pageView(screen || 'home');
     window.__shhhLang = window.__shhhLang || 'lv';
     const onLang = (e) => { window.__shhhLang = e.detail || 'lv'; };
