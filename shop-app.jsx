@@ -44,6 +44,7 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
   const nav = (s, p) => {
     setMenuOpen(false);
     setScreen(s); setParams(p || {});
+    if (window.pushRoute) window.pushRoute(s, p || {}); // shareable URL + back button
     // Marketing: virtual page view per screen + product-card selection.
     if (window.SHHH_TRACK) {
       window.SHHH_TRACK.pageView(s);
@@ -66,6 +67,18 @@ function ShopApp({ themeId, cardStyle, heroLayout, checkoutFlow, tone, startScre
       try { updateSEO(s, p || {}, 'lv'); } catch (e) {}
     }
   };
+
+  // Back/forward buttons → restore the screen from the URL.
+  React.useEffect(() => {
+    const onPop = (e) => {
+      const r = (e && e.state && e.state.screen) ? e.state : (window.routeFromUrl && window.routeFromUrl());
+      if (!r) return;
+      setScreen(r.screen); setParams(r.params || {});
+      if (typeof updateSEO === 'function') { try { updateSEO(r.screen, r.params || {}, 'lv'); } catch (e) {} }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Inject site-wide structured data once + set initial page SEO.
   React.useEffect(() => {

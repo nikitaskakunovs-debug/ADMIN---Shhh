@@ -57,6 +57,7 @@ function DAppInner() {
     else if (s === 'product') target = 'pdp';
     setScreen(target);
     setParams(p || {});
+    if (window.pushRoute) window.pushRoute(target, p || {}); // shareable URL + back button
     // Marketing: virtual page view per screen + product-card selection.
     if (window.SHHH_TRACK) {
       window.SHHH_TRACK.pageView(target);
@@ -69,6 +70,19 @@ function DAppInner() {
       try { updateSEO(s, p || {}, window.__shhhLang || 'lv'); } catch (e) {}
     }
   };
+
+  // Back/forward buttons → restore the screen from the URL.
+  React.useEffect(() => {
+    const onPop = (e) => {
+      const r = (e && e.state && e.state.screen) ? e.state : (window.routeFromUrl && window.routeFromUrl());
+      if (!r) return;
+      setScreen(r.screen === 'product' ? 'pdp' : r.screen);
+      setParams(r.params || {});
+      if (typeof updateSEO === 'function') { try { updateSEO(r.screen, r.params || {}, window.__shhhLang || 'lv'); } catch (e) {} }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Cross-cutting hooks the reused modules expect.
   React.useEffect(() => {

@@ -316,4 +316,59 @@ function updateSEO(screen, params, lang) {
   }
 }
 
-Object.assign(window, { injectGlobalSEO, updateSEO, SEO_MAP, SITE_SEO: SITE });
+// ─────────────────────────────────────────────────────────────
+// Client router — keeps the URL in sync with the screen (pushState), so
+// products/categories/guides have real, shareable URLs and back/forward work.
+// Only the INDEXABLE screens (which have pre-rendered files) change the URL;
+// transient screens (cart/checkout/…) leave it, so a refresh always lands on a
+// real page. Path scheme matches tools/prerender.mjs.
+// ─────────────────────────────────────────────────────────────
+function routeToPath(screen, params) {
+  params = params || {};
+  if (screen === 'home') return '';
+  if (screen === 'product' || screen === 'pdp') return params.id ? 'produkts/' + params.id : null;
+  if (screen === 'catland') return params.cat ? 'kategorija/' + params.cat : null;
+  if (screen === 'content') return params.key ? 'info/' + params.key : null;
+  if (screen === 'legal') return params.key ? 'juridiski/' + params.key : null;
+  return null; // transient screen — don't touch the URL
+}
+function pathToRoute(path) {
+  path = (path || '').replace(/^\/+|\/+$/g, '').replace(/\/index\.html$/, '');
+  if (!path) return { screen: 'home', params: {} };
+  const m = path.match(/^(produkts|kategorija|info|juridiski)\/(.+?)\/?$/);
+  if (!m) return null;
+  const seg = m[2];
+  if (m[1] === 'produkts') return { screen: 'product', params: { id: seg } };
+  if (m[1] === 'kategorija') return { screen: 'catland', params: { cat: seg } };
+  if (m[1] === 'info') return { screen: 'content', params: { key: seg } };
+  if (m[1] === 'juridiski') return { screen: 'legal', params: { key: seg } };
+  return null;
+}
+// Deployment base path (e.g. '/' or '/ADMIN---Shhh/') derived once from where we
+// loaded, so pushState works on a project subpath and a root domain alike.
+function shhhBase() {
+  if (window.__shhhBase != null) return window.__shhhBase;
+  let p = location.pathname;
+  const r = window.__shhhRoute;
+  const rp = r ? routeToPath(r.screen, r.params) : null;
+  if (rp) { p = p.replace(new RegExp(rp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/?(index\\.html)?$'), ''); }
+  else { p = p.replace(/[^/]*\.html$/, ''); }
+  if (!p.endsWith('/')) p += '/';
+  window.__shhhBase = p;
+  return p;
+}
+// Push the URL for an indexable screen (no-op for transient screens).
+function pushRoute(screen, params) {
+  try {
+    const path = routeToPath(screen, params);
+    if (path == null) return;
+    const url = shhhBase() + path;
+    if (location.pathname.replace(/\/$/, '') !== url.replace(/\/$/, '')) history.pushState({ screen, params }, '', url);
+  } catch (e) {}
+}
+// Current route from the URL (for popstate / no-__shhhRoute boot).
+function routeFromUrl() {
+  try { return pathToRoute(location.pathname.slice(shhhBase().length)); } catch (e) { return null; }
+}
+
+Object.assign(window, { injectGlobalSEO, updateSEO, SEO_MAP, SITE_SEO: SITE, routeToPath, pathToRoute, pushRoute, routeFromUrl });
