@@ -30,6 +30,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Pre-render (SSG) crawlable static HTML with content + JSON-LD baked in.
+      - name: Pre-render
+        run: npm run prerender
+
       # Deploy gate: boot the COMPILED bundles in jsdom. If either storefront
       # page fails to render, the job fails here and gh-pages is NOT updated —
       # a broken build can never reach the live site.

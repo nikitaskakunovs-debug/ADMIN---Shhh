@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "node tools/build.mjs",
+    "prerender": "node tools/prerender.mjs",
     "smoke": "node tools/smoke.mjs",
-    "deploy": "node tools/build.mjs && node tools/smoke.mjs"
+    "deploy": "node tools/build.mjs && node tools/prerender.mjs && node tools/smoke.mjs"
   },
   "devDependencies": {
     "@babel/standalone": "7.29.0",
