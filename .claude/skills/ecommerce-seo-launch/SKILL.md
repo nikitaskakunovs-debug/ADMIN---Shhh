@@ -85,8 +85,18 @@ The pattern that worked (no framework, just the existing build + jsdom):
 
 Gotchas that cost real time here (check them every time):
 - **Relative assets 404 from subdirectories.** A page at `/produkts/x/` loading `vendor/react.js`
-  resolves to `/produkts/x/vendor/react.js` → 404 → no bundle. Fix with a **relative
-  `<base href="../../">`** (depth = number of path segments) — works on a subpath *and* a root domain.
+  resolves to `/produkts/x/vendor/react.js` → 404 → no bundle. **Do NOT fix this with a relative
+  `<base href="../../">`** — it breaks the instant the URL is hit *without a trailing slash*
+  (`/produkts/x`), which is exactly what client-side `pushState` produces and what most shared
+  links look like: `../` then resolves one level too high, the bundle 404s, the page is stuck on
+  its loading placeholder, and (insidiously) it *works on refresh* if your host 301-redirects to
+  the trailing slash, so it looks fine in casual testing. Instead set an **absolute base at runtime**
+  with a tiny inline head script that strips this route's known segment count off
+  `location.pathname` (identical with/without the trailing slash, on a subpath or root domain):
+  `var p=location.pathname.split('/').filter(Boolean); base='/'+p.slice(0,p.length-SEG).join('/')+'/'`.
+  Also **strip script `<link rel=preload>`s on deep pages** — the browser's preload scanner resolves
+  their relative href against the page URL *before* your base script runs, firing spurious 404s.
+  Test both `/route` and `/route/` explicitly.
 - **Screen-name mismatches silently kill schema.** If the router uses `'pdp'`/`'browse'` but the
   SEO module only builds product schema for `screen === 'product'`, the product JSON-LD,
   `<title>` and canonical **never fire**. Normalize names in one place.
